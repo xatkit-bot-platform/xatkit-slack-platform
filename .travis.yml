@@ -7,3 +7,4 @@ script:
 - mvn install
 before_install:
 - bash .util/build_xatkit.sh
+- openssl aes-256-cbc -K $encrypted_f2caf029a973_key -iv $encrypted_f2caf029a973_iv -in runtime/src/test/resources/test-variables.properties.enc -out runtime/src/test/resources/test-variables.properties -d
