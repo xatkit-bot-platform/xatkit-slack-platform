@@ -7,4 +7,9 @@ script:
 - mvn install
 before_install:
 - bash .util/build_xatkit.sh
-- openssl aes-256-cbc -K $encrypted_f2caf029a973_key -iv $encrypted_f2caf029a973_iv -in runtime/src/test/resources/test-variables.properties.enc -out runtime/src/test/resources/test-variables.properties -d
+- openssl aes-256-cbc -K $encrypted_f2caf029a973_key -iv $encrypted_f2caf029a973_iv
+  -in runtime/src/test/resources/test-variables.properties.enc -out runtime/src/test/resources/test-variables.properties
+  -d
+notifications:
+  slack:
+    secure: IkcmafYs9jtttyVTaCPXZjp6hVWaQA/Sgza5DUeIkYVrJr+YcJR/bgwvOeCfXfSG0oPh+qAsRB4oRzV2G1lIN94Gp6XB8fxuaD5AmuYZiKislDJsbw1RlfU4840Y2dAOjnmBd+8M5p5+Q2maY4hRnimKQdePueMZEz8hGBL+XdrbOZpBS7LO5CwScU6KbA3/gQDWtbfH+jnGaxZmbGrDtxzHB+u0XbzIyRrEwxBmPQK9DrKL4u+2EqYmQ/gwThpX9FJojQl3JeB2vLgqscuIaFHmsekO3PCJOc4I7xrLSplzLitPnNbwTTC6+cCct7IRET62RQdeZaqtogEwE9UXWPzwNEDdsWLYO7NLTyP9sOS4Xe5d619mDfruSctF83Qe9xRbfiBAJgqmYjT58Au6pLhoDiAfeDwOFh2BIKP5FgivAwjTAgtfgfMF93L0cRnq1K51svu7sNQpjU0J+D8hjMxrY01JvHtaxzcwx7GCbcKE54AbDx7VXCwQ6voJzYfFa5khy6Ik++nZz0N4al+oXWwU/YF+Hc1wJgonZibmMmw/cafLNIQXm2//2HmgDgZ/XyjHw3uRHRqwo2Mdh7CSV0S+ychOqepyfXRwm6noILkT3v69AF/soTuWSMxVgEAgNrKxw6NjgCiRKPlpEYC7ZQ+yrN+XWLIbIDxiHtO43gM=
