@@ -52,4 +52,14 @@ public interface SlackUtils extends ChatUtils {
      */
     String SLACK_CONTEXT_KEY = "slack";
 
+    /**
+     * The {@link RuntimeContexts} key used to store the slack user email information.
+     */
+    String SLACK_USER_EMAIL_CONTEXT_KEY = "userEmail";
+
+    /**
+     * The {@link RuntimeContexts} key used to store the slack user identifier information.
+     */
+    String SLACK_USER_ID_CONTEXT_KEY = "userId";
+
 }

@@ -185,17 +185,11 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * @return the Slack username associated to the provided {@code userId}
      */
     private String getUsernameFromUserId(String userId) {
-        Log.info("Retrieving username for user ID {0}", userId);
         String username = DEFAULT_USERNAME;
-        UsersInfoRequest usersInfoRequest = UsersInfoRequest.builder()
-                .token(slackToken)
-                .user(userId)
-                .build();
         try {
-            UsersInfoResponse response = slack.methods().usersInfo(usersInfoRequest);
-            User user = response.getUser();
+            User user = getUserFromUserId(userId);
             if (nonNull(user)) {
-                User.Profile profile = response.getUser().getProfile();
+                User.Profile profile = user.getProfile();
                 /*
                  * Use the display name if it exists, otherwise use the real name that should always be set.
                  */
@@ -213,6 +207,52 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                     DEFAULT_USERNAME);
         }
         return username;
+    }
+
+    /**
+     * Returns the Slack user email associated to the provided {@code userId}.
+     * <p>
+     * This method returns the email set in the user's profile. If an error occurred or if the email is not set an
+     * empty {@link String} is returned.
+     *
+     * @param userId the user identifier to retrieve the user email from
+     * @return the Slack user email associated to the provided {@code userId}
+     */
+    private String getUserEmailFromUserId(String userId) {
+        String email = "";
+        try {
+            User user = getUserFromUserId(userId);
+            if (nonNull(user)) {
+                User.Profile profile = user.getProfile();
+                email = profile.getEmail();
+            } else {
+                Log.error("Cannot retrieve the user email for {0}, returning an empty email", userId);
+            }
+        } catch (IOException | SlackApiException e) {
+            Log.error("Cannot retrieve the user email for {0}, returning an empty email", userId);
+        }
+        return email;
+    }
+
+    /**
+     * Retrieves the {@link User} instance associated to the provided {@code userId}.
+     * <p>
+     * This method is used to access user-related information. Note that each call to this method will call the Slack
+     * API (see #3).
+     *
+     * @param userId the user identifier to retrieve the {@link User} instance from
+     * @return the {@link User} instance associated to the provided {@code userId}
+     * @throws SlackApiException if the Slack API returns an error
+     * @throws IOException       if an error occurred when reaching the Slack API
+     */
+    private User getUserFromUserId(String userId) throws SlackApiException, IOException {
+        Log.info("Retrieving User for the user ID {0}", userId);
+        UsersInfoRequest usersInfoRequest = UsersInfoRequest.builder()
+                .token(slackToken)
+                .user(userId)
+                .build();
+        UsersInfoResponse response = slack.methods().usersInfo(usersInfoRequest);
+        return response.getUser();
     }
 
     /**
@@ -316,6 +356,10 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                 .CHAT_USERNAME_CONTEXT_KEY, getUsernameFromUserId(user));
                                         session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
                                                 SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
+                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
+                                                SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY, getUserEmailFromUserId(user));
+                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
+                                                SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
                                         /*
                                          * Copy the variables in the chat context (this context is inherited from the
                                          * Chat platform)

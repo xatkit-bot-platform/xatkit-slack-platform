@@ -6,6 +6,8 @@
       <parameters name="channel"/>
       <parameters name="username"/>
       <parameters name="rawMessage"/>
+      <parameters name="userId"/>
+      <parameters name="userEmail"/>
     </outContexts>
   </eventProviderDefinitions>
   <eventProviderDefinitions xsi:type="platform:InputProviderDefinition" name="ChatProvider">
