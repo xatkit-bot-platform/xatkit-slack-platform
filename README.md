@@ -10,7 +10,7 @@ The Slack platform is a concrete implementation of the [*ChatPlatform*](https://
 
 ## Providers
 
-The chat platform defines the following providers:
+The Slack platform defines the following providers:
 
 | Provider                   | Type  | Context Parameters | Description                                                  |
 | -------------------------- | ----- | ------------------ | ------------------------------------------------------------ |
@@ -39,7 +39,7 @@ The chat platform defines the following providers:
 
 ## Options
 
-The chat platform supports the following configuration options
+The Slack platform supports the following configuration options
 
 | Key                  | Values | Description                                                  | Constraint    |
 | -------------------- | ------ | ------------------------------------------------------------ | ------------- |
