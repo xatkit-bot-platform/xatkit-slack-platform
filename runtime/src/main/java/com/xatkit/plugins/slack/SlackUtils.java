@@ -76,4 +76,14 @@ public interface SlackUtils extends ChatUtils {
      */
     String SLACK_USER_ID_CONTEXT_KEY = "userId";
 
+    /**
+     * The {@link RuntimeContexts} key used to store the timestamp of the thread of a received message.
+     */
+    String SLACK_THREAD_TS = "threadTs";
+
+    /**
+     * The {@link RuntimeContexts} key used to store the timestamp of the received message.
+     */
+    String SLACK_MESSAGE_TS = "messageTs";
+
 }

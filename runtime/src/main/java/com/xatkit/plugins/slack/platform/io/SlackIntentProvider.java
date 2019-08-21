@@ -279,7 +279,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     @Override
     public void run() {
         /*
-         * Required because the RTM listener is started in another thread, and if this thread terminates the main
+         * Required because the RTM listener is started in another threadTs, and if this threadTs terminates the main
          * application terminates.
          */
         synchronized (this) {
@@ -364,6 +364,23 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                             }
                                         }
 
+                                        /*
+                                         * Extract thread-related information. The thread_ts field contains a value
+                                         * if the received message is part of a thread, otherwise the field is not
+                                         * specified.
+                                         */
+                                        JsonElement threadTsObject = json.get("thread_ts");
+                                        String threadTs = "";
+                                        if(nonNull(threadTsObject)) {
+                                            threadTs = threadTsObject.getAsString();
+                                        }
+
+                                        JsonElement tsObject = json.get("ts");
+                                        String messageTs = "";
+                                        if(nonNull(tsObject)) {
+                                            messageTs = tsObject.getAsString();
+                                        }
+
                                         XatkitSession session = runtimePlatform.createSessionFromChannel(channel);
                                         /*
                                          * Call getRecognizedIntent before setting any context variable, the
@@ -389,6 +406,11 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                 SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY, getUserEmailFromUserId(user));
                                         session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
                                                 SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
+                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
+                                                SlackUtils.SLACK_THREAD_TS, threadTs);
+                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
+                                                SlackUtils.SLACK_MESSAGE_TS, messageTs);
+
                                         /*
                                          * Copy the variables in the chat context (this context is inherited from the
                                          * Chat platform)
@@ -449,7 +471,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * <p>
      * This handler will attempt to reconnect the RTM client by creating a new {@link RTMClient} instance after
      * waiting {@code RECONNECT_WAIT_TIME * <number_of_attempts>} ms. Note that reconnecting the RTM client will be
-     * executed in the main thread and will block Xatkit execution.
+     * executed in the main threadTs and will block Xatkit execution.
      *
      * @see #RECONNECT_WAIT_TIME
      */

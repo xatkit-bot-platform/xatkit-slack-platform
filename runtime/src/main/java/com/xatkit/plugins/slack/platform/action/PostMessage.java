@@ -10,6 +10,7 @@ import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.text.MessageFormat;
 
@@ -33,6 +34,11 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
     protected String channel;
 
     /**
+     * The timestamp of the thread to post the message to.
+     */
+    protected String threadTs;
+
+    /**
      * Constructs a new {@link PostMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
      * message} and {@code channel}.
      *
@@ -44,15 +50,38 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
      * @throws IllegalArgumentException if the provided {@code message} or {@code channel} is {@code null} or empty.
      */
     public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel) {
+        this(runtimePlatform, session, message, channel, null);
+    }
+
+    /**
+     * Constructs a new {@link PostMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
+     * message}, {@code channel}, and {@code threadTs}.
+     *
+     * @param runtimePlatform the {@link SlackPlatform} containing this action
+     * @param session         the {@link XatkitSession} associated to this action
+     * @param message         the message to post
+     * @param channel         the Slack channel to post the message to
+     * @param threadTs        the timestamp of the thread to post the message to
+     */
+    public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel,
+                       @Nullable String threadTs) {
         super(runtimePlatform, session, message);
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
+        /*
+         * Do not check if threadTs is null, it is the case if the user input is not in a thread.
+         */
         this.channel = channel;
+        this.threadTs = threadTs;
     }
 
     /**
-     * Posts the provided {@code message} to the given {@code channel}.
+     * Posts the provided {@code message} to the given {@code channel} and {@code threadTs}.
+     * <p>
+     * <b>Note</b>: if {@code threadTs} is {@code null} this method posts the provided {@code message} in the
+     * {@code channel} itself. If {@code threadTs} contains a value the provided {@code message} is posted as a reply
+     * to the thread.
      * <p>
      * This method relies on the containing {@link SlackPlatform}'s Slack bot API token to authenticate the bot and
      * post the {@code message} to the given {@code channel}.
@@ -63,13 +92,16 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
      */
     @Override
     public Object compute() throws IOException {
-        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                .token(runtimePlatform.getSlackToken())
+        ChatPostMessageRequest.ChatPostMessageRequestBuilder builder = ChatPostMessageRequest.builder();
+        builder.token(runtimePlatform.getSlackToken())
                 .channel(this.runtimePlatform.getChannelId(channel))
                 .text(message)
                 .unfurlLinks(true)
-                .unfurlMedia(true)
-                .build();
+                .unfurlMedia(true);
+        if (nonNull(threadTs) && !threadTs.isEmpty()) {
+            builder.threadTs(threadTs);
+        }
+        ChatPostMessageRequest request = builder.build();
         try {
             ChatPostMessageResponse response = runtimePlatform.getSlack().methods().chatPostMessage(request);
             if (response.isOk()) {

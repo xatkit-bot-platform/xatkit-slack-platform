@@ -8,6 +8,8 @@
       <parameters name="rawMessage"/>
       <parameters name="userId"/>
       <parameters name="userEmail"/>
+      <parameters name="threadTs"/>
+      <parameters name="messageTs"/>
     </outContexts>
   </eventProviderDefinitions>
   <eventProviderDefinitions xsi:type="platform:InputProviderDefinition" name="ChatProvider">

@@ -12,6 +12,8 @@ providers {
 			sets parameter rawMessage
 			sets parameter userId
 			sets parameter userEmail
+			sets parameter threadTs
+			sets parameter messageTs
 		}
 	}
 }
