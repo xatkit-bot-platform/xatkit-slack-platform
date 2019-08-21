@@ -44,6 +44,8 @@ The Slack platform supports the following configuration options
 | Key                  | Values | Description                                                  | Constraint    |
 | -------------------- | ------ | ------------------------------------------------------------ | ------------- |
 | `xatkit.slack.token` | String | The [Slack token](https://api.slack.com/) used by Xatkit to deploy the bot | **Mandatory** |
+| `xatkit.slack.ignore_fallback_on_group_channels` | Boolean | Specifies whether fallback intents should be ignored in group channels | **Optional** (default `false`) |
+| `xatkit.slack.listen_mentions_on_group_channels` | Boolean | Specifies whether the bot should only listen to mentions in group channels | **Optional** (default `false`) |
 
 **Note**: if the Slack platform is used as a concrete implementation of the [*ChatPlatform*](https://github.com/xatkit-bot-platform/xatkit-chat-platform) the following property must be set in the Xatkit configuration:
 
