@@ -104,6 +104,13 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     private boolean ignoreFallbackOnGroupChannels;
 
     /**
+     * Specified whether the bot should listen to mentions on group channels.
+     * <p>
+     * When set to {@code true}, this feature allows to define bots that only react on mentions in group channels.
+     */
+    private boolean listenMentionsOnGroupChannels;
+
+    /**
      * Constructs a new {@link SlackIntentProvider} from the provided {@code runtimePlatform} and
      * {@code configuration}.
      * <p>
@@ -129,6 +136,9 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                 "associated to the key %s", slackToken, SlackUtils.SLACK_TOKEN_KEY);
         this.ignoreFallbackOnGroupChannels = configuration.getBoolean(SlackUtils.IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY,
                 SlackUtils.DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS);
+        this.listenMentionsOnGroupChannels =
+                configuration.getBoolean(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY,
+                        SlackUtils.DEFAULT_LISTEN_MENTIONS_ON_GROUP_CHANNELS);
         this.slack = new Slack();
         this.botId = getSelfId();
         try {
@@ -161,7 +171,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      *
      * @return the Slack bot identifier
      */
-    private String getSelfId() {
+    protected String getSelfId() {
         AuthTestRequest request = AuthTestRequest.builder().token(slackToken).build();
         try {
             AuthTestResponse response = slack.methods().authTest(request);
@@ -335,6 +345,25 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                     if (!text.isEmpty()) {
                                         Log.info("Received message {0} from user {1} (channel: {2})", text,
                                                 user, channel);
+
+                                        if (listenMentionsOnGroupChannels && SlackIntentProvider.this.runtimePlatform.isGroupChannel(channel)) {
+                                            String botMention = "<@" + SlackIntentProvider.this.getSelfId() + ">";
+                                            if (text.contains(botMention)) {
+                                                /*
+                                                 * The message contains a mention to the bot, we need to remove it
+                                                 * before sending it to the NLP engine to avoid pollution and false
+                                                 * negative matches.
+                                                 */
+                                                text = text.replaceAll(botMention, "").trim();
+                                            } else {
+                                                /*
+                                                 * Nothing to do, the bot listens to mentions and the message is not
+                                                 * a mention.
+                                                 */
+                                                return;
+                                            }
+                                        }
+
                                         XatkitSession session = runtimePlatform.createSessionFromChannel(channel);
                                         /*
                                          * Call getRecognizedIntent before setting any context variable, the

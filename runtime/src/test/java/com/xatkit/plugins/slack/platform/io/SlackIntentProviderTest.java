@@ -115,6 +115,28 @@ public class SlackIntentProviderTest extends SlackTest {
     }
 
     @Test
+    public void sendMentionGroupChannelListenToMentionProperty() {
+        Configuration configuration = getValidSlackIntentProviderConfiguration();
+        configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
+        slackIntentProvider = new SlackIntentProvider(slackPlatform, configuration);
+        slackIntentProvider.getRtmClient().onMessage(getValidMessageMention());
+        assertThat(stubXatkitCore.getHandledEvents()).as("Event handled").hasSize(1);
+        XatkitSession session = stubXatkitCore.getXatkitSession(SLACK_CHANNEL);
+        String rawMessage = (String) session.getRuntimeContexts().getContextValue(SlackUtils.SLACK_CONTEXT_KEY,
+                SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY);
+        assertThat(rawMessage).as("Filtered mention").doesNotContain("<@" + slackIntentProvider.getSelfId() + ">");
+    }
+
+    @Test
+    public void sendNoMentionGroupChannelListenToMentionProperty() {
+        Configuration configuration = getValidSlackIntentProviderConfiguration();
+        configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
+        slackIntentProvider = new SlackIntentProvider(slackPlatform, configuration);
+        slackIntentProvider.getRtmClient().onMessage(getValidMessage());
+        assertThat(stubXatkitCore.getHandledEvents()).as("No event handled").isEmpty();
+    }
+
+    @Test
     public void sendSlackMessageInvalidType() {
         slackIntentProvider = getValidSlackInputProvider();
         slackIntentProvider.getRtmClient().onMessage(getMessageInvalidType());
@@ -155,14 +177,25 @@ public class SlackIntentProviderTest extends SlackTest {
     }
 
     private SlackIntentProvider getValidSlackInputProvider() {
+        Configuration configuration = getValidSlackIntentProviderConfiguration();
+        return new SlackIntentProvider(slackPlatform, configuration);
+    }
+
+    private Configuration getValidSlackIntentProviderConfiguration() {
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty(SlackUtils.SLACK_TOKEN_KEY, getSlackToken());
-        return new SlackIntentProvider(slackPlatform, configuration);
+        return configuration;
     }
 
     private String getValidMessage() {
         return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello\", \"channel\":\"{0}\", " +
                 "\"user\":\"UBD4Z7SKH\"'}'", SLACK_CHANNEL);
+    }
+
+    private String getValidMessageMention() {
+        String botMention = "<@" + slackIntentProvider.getSelfId() + ">";
+        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello {0}\", \"channel\":\"{1}\", " +
+                "\"user\":\"UBD4Z7SKH\"'}'", botMention, SLACK_CHANNEL);
     }
 
     private String getMessageInvalidType() {
