@@ -128,7 +128,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                 "provided token %s, please ensure that the Xatkit configuration contains a valid Slack bot API token " +
                 "associated to the key %s", slackToken, SlackUtils.SLACK_TOKEN_KEY);
         this.ignoreFallbackOnGroupChannels = configuration.getBoolean(SlackUtils.IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY,
-                SlackUtils.DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY);
+                SlackUtils.DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS);
         this.slack = new Slack();
         this.botId = getSelfId();
         try {
