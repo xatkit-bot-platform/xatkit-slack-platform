@@ -14,8 +14,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.xatkit.core.XatkitException;
+import com.xatkit.core.platform.io.IntentRecognitionHelper;
 import com.xatkit.core.platform.io.RuntimeEventProvider;
-import com.xatkit.core.platform.io.RuntimeIntentProvider;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.intent.RecognizedIntent;
 import com.xatkit.plugins.chat.ChatUtils;
@@ -36,7 +36,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
- * A Slack user {@link RuntimeIntentProvider}.
+ * A Slack user {@link ChatIntentProvider}.
  * <p>
  * This class relies on the Slack RTM API to receive direct messages and react to them. Note that this input provider
  * only captures direct messages sent to the Slack bot associated to this class.
@@ -371,13 +371,13 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                          */
                                         JsonElement threadTsObject = json.get("thread_ts");
                                         String threadTs = "";
-                                        if(nonNull(threadTsObject)) {
+                                        if (nonNull(threadTsObject)) {
                                             threadTs = threadTsObject.getAsString();
                                         }
 
                                         JsonElement tsObject = json.get("ts");
                                         String messageTs = "";
-                                        if(nonNull(tsObject)) {
+                                        if (nonNull(tsObject)) {
                                             messageTs = tsObject.getAsString();
                                         }
 
@@ -386,8 +386,9 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                          * Call getRecognizedIntent before setting any context variable, the
                                          * recognition triggers a decrement of all the context variables.
                                          */
-                                        RecognizedIntent recognizedIntent = SlackIntentProvider.this
-                                                .getRecognizedIntent(text, session);
+                                        RecognizedIntent recognizedIntent =
+                                                IntentRecognitionHelper.getRecognizedIntent(text, session,
+                                                SlackIntentProvider.this.xatkitCore);
                                         /*
                                          * The slack-related values are stored in the local context with a
                                          * lifespan count of 1: they are reset every time a message is

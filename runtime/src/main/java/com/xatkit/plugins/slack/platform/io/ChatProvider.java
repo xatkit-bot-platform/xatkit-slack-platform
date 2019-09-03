@@ -1,11 +1,10 @@
 package com.xatkit.plugins.slack.platform.io;
 
-import com.xatkit.core.platform.io.RuntimeIntentProvider;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import org.apache.commons.configuration2.Configuration;
 
 /**
- * A generic Slack user {@link RuntimeIntentProvider}.
+ * A generic Slack user {@link com.xatkit.plugins.chat.platform.io.ChatIntentProvider}.
  * <p>
  * This class wraps the {@link SlackIntentProvider} and allows to use it as a generic <i>ChatProvider</i> from the
  * <i>ChatPlatform</i>.
