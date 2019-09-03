@@ -3,6 +3,8 @@ Xatkit Slack Platform
 
 [![License Badge](https://img.shields.io/badge/license-EPL%202.0-brightgreen.svg)](https://opensource.org/licenses/EPL-2.0)
 [![Build Status](https://travis-ci.com/xatkit-bot-platform/xatkit-slack-platform.svg?branch=master)](https://travis-ci.com/xatkit-bot-platform/xatkit-slack-platform)
+[![Wiki Badge](https://img.shields.io/badge/doc-wiki-blue)](https://github.com/xatkit-bot-platform/xatkit-releases/wiki/Xatkit-Slack-Platform)
+
 
 Receive and send messages from [Slack](https://slack.com). This platform is bundled with the [Xatkit release](https://github.com/xatkit-bot-platform/xatkit-releases/releases).
 
