@@ -3,21 +3,17 @@ sudo: false
 dist: trusty
 language: java
 jdk: oraclejdk8
-
 cache:
   directories:
-    - '~/.m2/repository'
-
+  - "~/.m2/repository"
 before_install:
 - bash .util/build_xatkit.sh
 - bash .util/build_chat-platform.sh
 - openssl aes-256-cbc -K $encrypted_f2caf029a973_key -iv $encrypted_f2caf029a973_iv
   -in runtime/src/test/resources/test-variables.properties.enc -out runtime/src/test/resources/test-variables.properties
   -d
-  
 script:
 - mvn install
-
 notifications:
   slack:
-    secure: IkcmafYs9jtttyVTaCPXZjp6hVWaQA/Sgza5DUeIkYVrJr+YcJR/bgwvOeCfXfSG0oPh+qAsRB4oRzV2G1lIN94Gp6XB8fxuaD5AmuYZiKislDJsbw1RlfU4840Y2dAOjnmBd+8M5p5+Q2maY4hRnimKQdePueMZEz8hGBL+XdrbOZpBS7LO5CwScU6KbA3/gQDWtbfH+jnGaxZmbGrDtxzHB+u0XbzIyRrEwxBmPQK9DrKL4u+2EqYmQ/gwThpX9FJojQl3JeB2vLgqscuIaFHmsekO3PCJOc4I7xrLSplzLitPnNbwTTC6+cCct7IRET62RQdeZaqtogEwE9UXWPzwNEDdsWLYO7NLTyP9sOS4Xe5d619mDfruSctF83Qe9xRbfiBAJgqmYjT58Au6pLhoDiAfeDwOFh2BIKP5FgivAwjTAgtfgfMF93L0cRnq1K51svu7sNQpjU0J+D8hjMxrY01JvHtaxzcwx7GCbcKE54AbDx7VXCwQ6voJzYfFa5khy6Ik++nZz0N4al+oXWwU/YF+Hc1wJgonZibmMmw/cafLNIQXm2//2HmgDgZ/XyjHw3uRHRqwo2Mdh7CSV0S+ychOqepyfXRwm6noILkT3v69AF/soTuWSMxVgEAgNrKxw6NjgCiRKPlpEYC7ZQ+yrN+XWLIbIDxiHtO43gM=
+    secure: 3dn6KKBvshshU5RSIozAFzDbLC1nMZEWXAKQOr6/mRzNEK2qpMta66i0xcShl3hwOPm+uiRtMcxbu6paudEx3LCrFxQVJhGLKf4r/MHIDyV54t6bFihGAuBitwISq2rSlQVEbBYASsSZj5NSpll6hqYbjOalHi3R1veWJBNx5ylQ0/DV9JYpicKgyyrDaOXCfNhWtmRaeGc1J6PStfg5QD/m9ynZGShvV3RjxojfRBufK+A64MnbUkYYY1Ftw8yXPDoyqQLctsFx+8yrwIj7q8zEoHk2oGaB0ff3Y6+/bDibylWgCV9+eydAtoB6QCa5+7wJx3IVM0BHvnU3RMsoU1dso5ZV1jbrh00jCh3GUoJp6lmuQi0jbbc43XRcULvCuLN1r8RnnGaBRIXuUFDmcoe5eVvBfl1OLp6L5k5xQb/j5gv//yFeqH2wT51YjcBV72cyAiagRWmWdZFE4Qsc9XUnVXHa9wVZU9XQxFlp+376N+YI1bial0GuuQ6ArK3w+dbfNOZWAW+5O574LJ/2hVm+FXlwpbOuh8PZ7rQWyXD22cIzWVGXLmZvxG1uh25jzDSesG/OJWWrfaReHFv0ti0PWjceUO5FOQIa1ahsMg4LcUJqyXLkGNa7ECpWYMf8gIfvWB9jL93AQPQukOchLqr0Zb/El0lnBG4JjmPJG3I=
