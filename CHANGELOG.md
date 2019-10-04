@@ -18,6 +18,6 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 - `SlackUtils#DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY` has been renamed to `SlackUtils#DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS` to conform to the format of other configuration keys.
 - Reply action now posts message in its containing thread if it exists instead of in the channel top-level conversation
 
-## [2.0.0] - 2019 - 08 -20 
+## [2.0.0] - 2019-08-20 
 
 See the release notes [here](https://github.com/xatkit-bot-platform/xatkit-slack-platform/releases).
