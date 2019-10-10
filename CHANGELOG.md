@@ -8,6 +8,8 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 
 ## Unreleased
 
+## [2.1.0] - 2019-10-10
+
 ### Added
 
 - `xatkit.slack.listen_mentions_on_group_channels` configuration option to specify whether the bot should only listen to mentions (messages containing *@bot*) in group channels. This configuration option is **optional** and is set by default to **false**.
