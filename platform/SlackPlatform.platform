@@ -19,20 +19,20 @@ providers {
 }
 
 actions {
-	PostFileMessage(message, file, channel)
-	PostFileMessage(title, message, content, channel)
-	ReplyFileMessage(message, file)
-	PostAttachmentsMessage(attachments, channel)
-	ReplyAttachmentsMessage(attachments)
-	PostAttachmentsMessage(pretext, title, text, attchColor, timestamp, channel)
-	ReplyAttachmentsMessage(pretext, title, text, attchColor, timestamp)
-	PostAttachmentsMessage(pretext, title, text, attchColor, channel)
-	ReplyAttachmentsMessage(pretext, title, text, attchColor)
+	PostFileMessage(message : String, file: java.io.File, channel: String)
+	PostFileMessage(title : String, message : String, content : String, channel : String)
+	ReplyFileMessage(message : String, file : java.io.File)
+	PostAttachmentsMessage(attachments : java.util.List<com.github.seratch.jslack.api.model.Attachment>, channel : String)
+	ReplyAttachmentsMessage(attachments : java.util.List<com.github.seratch.jslack.api.model.Attachment>)
+	PostAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String, timestamp : String, channel : String)
+	ReplyAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String, timestamp : String)
+	PostAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String, channel : String)
+	ReplyAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String)
 	
 	// Formatting actions
 	// These actions do not perform operations on the Slack API, but return Strings that can be displayed as messages.
-	ItemizeList(list)
-	ItemizeList(list, formatter)
-	EnumerateList(list)
-	EnumerateList(list, formatter)
+	ItemizeList(list : java.util.List<?>)
+	ItemizeList(list : java.util.List<?>, formatter : String)
+	EnumerateList(list : java.util.List<?>)
+	EnumerateList(list : java.util.List<?>, formatter : String)
 }
