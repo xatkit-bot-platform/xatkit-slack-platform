@@ -14,6 +14,17 @@
 
     <packaging>pom</packaging>
 
+    <dependencies>
+
+        <!-- Slack -->
+
+        <dependency>
+            <groupId>com.github.seratch</groupId>
+            <artifactId>jslack</artifactId>
+        </dependency>
+
+    </dependencies>
+
     <profiles>
         <profile>
             <id>build-product</id>

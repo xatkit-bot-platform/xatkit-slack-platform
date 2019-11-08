@@ -9,9 +9,6 @@
     </formats>
     <files>
         <file>
-            <source>SlackPlatform.xmi</source>
-        </file>
-        <file>
             <source>SlackPlatform.platform</source>
         </file>
     </files>
