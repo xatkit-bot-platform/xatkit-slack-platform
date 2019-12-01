@@ -148,7 +148,7 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     public Object compute() throws IOException {
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
                 .token(runtimePlatform.getSlackToken())
-                .channel(channel)
+                .channel(this.runtimePlatform.getChannelId(channel))
                 .attachments(attachments)
                 .unfurlLinks(true)
                 .unfurlMedia(true)

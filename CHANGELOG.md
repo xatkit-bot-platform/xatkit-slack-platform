@@ -25,6 +25,7 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 
 - `SlackUtils#DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY` has been renamed to `SlackUtils#DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS` to conform to the format of other configuration keys.
 - Reply action now posts message in its containing thread if it exists instead of in the channel top-level conversation
+- `PostAttachmentsMessage` now posts to the correct Slack channel when its `channel` attribute refers to an username or channel name.
 
 ## [2.0.0] - 2019-08-20 
 
