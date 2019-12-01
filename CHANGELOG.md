@@ -14,10 +14,12 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 
 - `xatkit.slack.listen_mentions_on_group_channels` configuration option to specify whether the bot should only listen to mentions (messages containing *@bot*) in group channels. This configuration option is **optional** and is set by default to **false**.
 - The `slack` context now defines the `messageTs` and `threadTs`parameters corresponding to the timestamp of the message and the timestamp of its containing thread message (optional, `null` if the message is not contained in a thread).
+- Action `PostMessage(message, channel, threadTs)`. This action posts the provided *message* in the given *thread*. **Note**: this new action doesn't change the behavior of `PostMessage(message, channel)`.
 
 ### Changed
 
 - `SlackIntentProvider` and `ChatProvider` now use the new intent provider hierarchy (see [xatkit-runtime/#221](https://github.com/xatkit-bot-platform/xatkit-runtime/issues/221)). This doesn't change the public API, but requires to use the latest versions of [xatkit-runtime](https://github.com/xatkit-bot-platform/xatkit-runtime) and [xatkit-chat-platform](https://github.com/xatkit-bot-platform/xatkit-chat-platform).
+- `PostMessage` and `Reply` actions now return the timestamp of the posted message instead of `null`. This allows to store the timestamp and reuse it to post messages in specific threads.
 
 ### Fixed
 

@@ -106,6 +106,7 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
             ChatPostMessageResponse response = runtimePlatform.getSlack().methods().chatPostMessage(request);
             if (response.isOk()) {
                 Log.trace("Request {0} successfully sent to the Slack API", request);
+                return response.getTs();
             } else {
                 Log.error("An error occurred when processing the request {0}: received response {1}", request,
                         response);

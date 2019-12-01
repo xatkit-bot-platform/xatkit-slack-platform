@@ -19,6 +19,7 @@ providers {
 }
 
 actions {
+	PostMessage(message : String, channel : String, threadTs : String) : String
 	PostFileMessage(message : String, file: java.io.File, channel: String)
 	PostFileMessage(title : String, message : String, content : String, channel : String)
 	ReplyFileMessage(message : String, file : java.io.File)
