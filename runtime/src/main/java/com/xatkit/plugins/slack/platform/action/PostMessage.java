@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.text.MessageFormat;
 
+import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
@@ -104,6 +105,7 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
         ChatPostMessageRequest request = builder.build();
         try {
             ChatPostMessageResponse response = runtimePlatform.getSlack().methods().chatPostMessage(request);
+            logSlackApiResponse(response);
             if (response.isOk()) {
                 Log.trace("Request {0} successfully sent to the Slack API", request);
                 return response.getTs();

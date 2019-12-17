@@ -8,6 +8,10 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 
 ## Unreleased
 
+### Added
+
+- Erroring `SlackApiResponse` are now logged to ease debugging. If the error refers to OAuth scopes the required/provided scopes are logged.
+
 ## [3.0.0] - 2019-12-01
 
 ### Added

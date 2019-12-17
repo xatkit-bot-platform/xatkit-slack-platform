@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
@@ -155,6 +156,7 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
                 .build();
         try {
             ChatPostMessageResponse response = runtimePlatform.getSlack().methods().chatPostMessage(request);
+            logSlackApiResponse(response);
             if (response.isOk()) {
                 Log.trace("Request {0} successfully sent to the Slack API", request);
             } else {

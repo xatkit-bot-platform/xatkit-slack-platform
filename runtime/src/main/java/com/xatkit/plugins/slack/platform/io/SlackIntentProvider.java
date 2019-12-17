@@ -30,6 +30,7 @@ import javax.websocket.DeploymentException;
 import java.io.IOException;
 import java.text.MessageFormat;
 
+import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
@@ -175,6 +176,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
         AuthTestRequest request = AuthTestRequest.builder().token(slackToken).build();
         try {
             AuthTestResponse response = slack.methods().authTest(request);
+            logSlackApiResponse(response);
             return response.getUserId();
         } catch (IOException | SlackApiException e) {
             throw new XatkitException("Cannot retrieve the bot identifier", e);
@@ -262,6 +264,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                 .user(userId)
                 .build();
         UsersInfoResponse response = slack.methods().usersInfo(usersInfoRequest);
+        logSlackApiResponse(response);
         return response.getUser();
     }
 

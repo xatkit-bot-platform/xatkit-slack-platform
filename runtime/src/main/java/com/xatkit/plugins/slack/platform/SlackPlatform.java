@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -229,6 +230,7 @@ public class SlackPlatform extends ChatPlatform {
                             .types(Arrays.asList(ConversationType.PUBLIC_CHANNEL, ConversationType.PUBLIC_CHANNEL,
                                     ConversationType.IM, ConversationType.MPIM))
                             .build());
+            logSlackApiResponse(response);
             for (Conversation conversation : response.getChannels()) {
                 String conversationId = conversation.getId();
                 /*
@@ -246,6 +248,7 @@ public class SlackPlatform extends ChatPlatform {
                             .token(slackToken)
                             .user(userId)
                             .build());
+                    logSlackApiResponse(userResponse);
                     this.channelNames.put(userResponse.getUser().getName(), conversationId);
                     this.channelNames.put(userResponse.getUser().getRealName(), conversationId);
                     this.channelNames.put(userResponse.getUser().getProfile().getDisplayName(), conversationId);

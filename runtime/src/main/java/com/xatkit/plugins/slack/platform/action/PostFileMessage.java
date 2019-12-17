@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
+import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
@@ -164,6 +165,7 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
         FilesUploadRequest request = builder.build();
         try {
             FilesUploadResponse response = runtimePlatform.getSlack().methods().filesUpload(request);
+            logSlackApiResponse(response);
             if (response.isOk()) {
                 Log.trace("Request {0} successfully sent to the Slack API", request);
             } else {
