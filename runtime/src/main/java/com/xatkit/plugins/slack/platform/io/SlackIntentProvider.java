@@ -68,14 +68,6 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     private static int RECONNECT_WAIT_TIME = 2000;
 
     /**
-     * The {@link String} representing the Slack bot API token.
-     * <p>
-     * This token is used to authenticate the bot and receive messages through the RTM API.
-     */
-//    private String slackToken;
-
-
-    /**
      * The {@link Map} containing the {@link RTMClient}s associated to each workspace where the Slack app is installed.
      * <p>
      * Keys in this {@link Map} are {@code teamId}.
