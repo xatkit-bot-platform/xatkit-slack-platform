@@ -4,7 +4,6 @@ import com.github.seratch.jslack.api.methods.SlackApiException;
 import com.github.seratch.jslack.api.methods.request.files.FilesUploadRequest;
 import com.github.seratch.jslack.api.methods.response.files.FilesUploadResponse;
 import com.xatkit.core.XatkitException;
-import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
@@ -20,18 +19,17 @@ import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
 /**
- * A {@link RuntimeAction} that uploads a {@code file} with an associated {@code message} to a given Slack {@code
- * channel}.
- * <p>
- * This class relies on the {@link SlackPlatform}'s {@link com.github.seratch.jslack.Slack} client and Slack bot API
- * token to connect to the Slack API and post messages.
- * <p>
- * <b>Note:</b> this class requires that its containing {@link SlackPlatform} has been loaded with a valid Slack bot
- * API token in order to authenticate the bot and post messages.
+ * Uploads a {@code file} when an associated {@code message} to the Slack channel in the workspace identified by the
+ * provided {@code teamId}.
  *
  * @see PostMessage
  */
 public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
+
+    /**
+     * The unique identifier of the Slack workspace containing the channel to post the file to.
+     */
+    protected String teamId;
 
     /**
      * The Slack channel to post the attachments to.
@@ -63,27 +61,32 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
     private String message;
 
     /**
-     * Constructs a new {@link PostFileMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
-     * message}, {@code file}, and {@code channel}.
+     * Constructs {@link PostFileMessage} instance with the provided {@code runtimePlatform}, {@code session}, {@code
+     * message}, {@code file}, {@code channel}, and {@code teamId}.
      * <p>
      * This constructor builds a {@link PostFileMessage} action that uploads the provided {@code file} to the given
      * Slack {@code channel}. To upload a {@link String} as a file see
-     * {@link #PostFileMessage(SlackPlatform, XatkitSession, String, String, String, String)}.
+     * {@link #PostFileMessage(SlackPlatform, XatkitSession, String, String, String, String, String)}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
      * @param message         the message to associate to the uploaded {@link File}
      * @param file            the file to upload
      * @param channel         the Slack channel to upload the {@link File} to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code message} or {@code channel} is {@code null} or empty,
-     *                                  or if the provided {@code file} is {@code null} or does not exist
-     * @see #PostFileMessage(SlackPlatform, XatkitSession, String, String, String,
-     * String)
+     * @throws IllegalArgumentException if the provided {@code message}, {@code channel}, or {@code teamId} is {@code
+     *                                  null} or empty, or if the provided {@code file} is {@code null} or does not
+     *                                  exist
+     * @see #PostFileMessage(SlackPlatform, XatkitSession, String, String, String, String, String)
      */
     public PostFileMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, File file,
-                           String channel) {
+                           String channel, String teamId) {
         super(runtimePlatform, session);
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -96,12 +99,12 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
     }
 
     /**
-     * Constructs a new {@link PostFileMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
-     * title}, {@code message}, {@code content}, and {@code channel}.
+     * Constructs a {@link PostFileMessage} instance with the provided {@code runtimePlatform}, {@code session}, {@code
+     * title}, {@code message}, {@code content}, {@code channel}, and {@code teamId}.
      * <p>
      * This constructor builds a {@link PostFileMessage} action that uploads the provided {@code content} as a file
      * to the given Slack {@code channel}. To upload an existing {@link File} see
-     * {@link #PostFileMessage(SlackPlatform, XatkitSession, String, File, String)}.
+     * {@link #PostFileMessage(SlackPlatform, XatkitSession, String, File, String, String)}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
@@ -109,14 +112,19 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
      * @param message         the message to associate to the uploaded {@link File}
      * @param content         the content of the file to upload
      * @param channel         the Slack channel to upload the {@link File} to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code title}, {@code message}, {@code content}, or {@code
-     *                                  channel} is {@code null} or empty.
-     * @see #PostFileMessage(SlackPlatform, XatkitSession, String, File, String)
+     * @throws IllegalArgumentException if the provided {@code title}, {@code message}, {@code content}, {@code
+     *                                  channel}, or {@code teamId} is {@code null} or empty.
+     * @see #PostFileMessage(SlackPlatform, XatkitSession, String, File, String, String)
      */
     public PostFileMessage(SlackPlatform runtimePlatform, XatkitSession session, String title, String message,
-                           String content, String channel) {
+                           String content, String channel, String teamId) {
         super(runtimePlatform, session);
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -133,7 +141,8 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
     }
 
     /**
-     * Uploads the provided {@code file} and post it with the associated {@code message} to the given {@code channel}.
+     * Uploads the provided {@code file} and post it with the associated {@code message} to the {@code teamId}
+     * workspace's {@code channel}.
      * <p>
      * This method relies on the containing {@link SlackPlatform}'s Slack bot API token to authenticate the bot and
      * upload the {@code file} to the given {@code channel}.
@@ -143,8 +152,8 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
     @Override
     public Object compute() {
         FilesUploadRequest.FilesUploadRequestBuilder builder = FilesUploadRequest.builder();
-        builder.token(runtimePlatform.getSlackToken())
-                .channels(Arrays.asList(this.runtimePlatform.getChannelId(channel)));
+        builder.token(runtimePlatform.getSlackToken(teamId))
+                .channels(Arrays.asList(this.runtimePlatform.getChannelId(teamId, channel)));
         if (nonNull(message) && !message.isEmpty()) {
             /*
              * Uploading the initial comment
@@ -180,6 +189,6 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
 
     @Override
     protected XatkitSession getClientSession() {
-        return this.runtimePlatform.createSessionFromChannel(channel);
+        return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

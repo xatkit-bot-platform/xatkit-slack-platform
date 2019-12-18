@@ -11,6 +11,11 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 ### Added
 
 - Erroring `SlackApiResponse` are now logged to ease debugging. If the error refers to OAuth scopes the required/provided scopes are logged.
+- Add support for distributed Slack app. The Xatkit configuration can now contain `xatkit.slack.client.id` and `xatkit.slack.client.secret` properties that are used to start the SlackPlatform in distributed mode, allowing installations of the bot in multiple workspaces. The SlackPlatform manages the OAuth tokens in order to automatically fill the parameters of *Reply* actions and ensure that replies are posted in the correct workspaces.
+
+### Changed
+
+- *Post* actions must now define a `teamId` parameter that is used to specify the workspace to post to. **This change breaks the public API**: existing bots relying on *Post* actions must be updated to specify the `teamId` parameter.
 
 ## [3.0.0] - 2019-12-01
 

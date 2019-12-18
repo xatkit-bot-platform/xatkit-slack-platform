@@ -17,11 +17,45 @@ public interface SlackUtils extends ChatUtils {
 
     /**
      * The {@link Configuration} key to store the Slack bot API token.
+     * <p>
+     * This {@link Configuration} key can be provided to start the platform in development mode, meaning that it will
+     * be bound to the provided token and will not accept additional installations.
+     * <p>
+     * The platform can be started in deployment mode by providing the app's {@code clientId} and {@code clientSecret
+     * } using the dedicated keys.
      *
      * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
      * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
      */
     String SLACK_TOKEN_KEY = "xatkit.slack.token";
+
+    /**
+     * The {@link Configuration} key to store the Slack app client id.
+     * <p>
+     * This {@link Configuration} key is provided when deploying and distributing the bot, and allows multiple
+     * installations of it. In this scenario the {@link Configuration} should not contain a Slack token.
+     * <p>
+     * If this key is specified the {@link Configuration} must also contain the {@link #SLACK_CLIENT_SECRET_KEY} key.
+     *
+     * @see #SLACK_CLIENT_SECRET_KEY
+     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
+     * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
+     */
+    String SLACK_CLIENT_ID_KEY = "xatkit.slack.client.id";
+
+    /**
+     * The {@link Configuration} key to store the Slack app client secret.
+     * <p>
+     * This {@link Configuration} key is provided when deploying and distributing the bot, and allows multiple
+     * installations of it. In this scenario the {@link Configuration} should not contain a Slakc token.
+     * <p>
+     * If this key is specified the {@link Configuration} must also contain the {@link #SLACK_CLIENT_ID_KEY} key.
+     *
+     * @see #SLACK_CLIENT_ID_KEY
+     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
+     * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
+     */
+    String SLACK_CLIENT_SECRET_KEY = "xatkit.slack.client.secret";
 
     /**
      * The {@link Configuration} key to store whether to ignore fallback intents on group channels.
@@ -39,7 +73,7 @@ public interface SlackUtils extends ChatUtils {
      *
      * @see #DEFAULT_LISTEN_MENTIONS_ON_GROUP_CHANNELS
      */
-    String LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY ="xatkit.slack.listen_mentions_on_group_channels";
+    String LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY = "xatkit.slack.listen_mentions_on_group_channels";
 
     /**
      * The default value of the {@link #IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY} {@link Configuration} key.
@@ -65,6 +99,11 @@ public interface SlackUtils extends ChatUtils {
      * The {@link RuntimeContexts} key used to store slack-related information.
      */
     String SLACK_CONTEXT_KEY = "slack";
+
+    /**
+     * The {@link RuntimeContexts} key used to store the slack team identifier information.
+     */
+    String SLACK_TEAM_CONTEXT_KEY = "team";
 
     /**
      * The {@link RuntimeContexts} key used to store the slack user email information.

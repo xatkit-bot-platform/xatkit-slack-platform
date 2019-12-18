@@ -5,7 +5,6 @@ import com.github.seratch.jslack.api.methods.request.chat.ChatPostMessageRequest
 import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageResponse;
 import com.github.seratch.jslack.api.model.Attachment;
 import com.xatkit.core.XatkitException;
-import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
@@ -22,15 +21,14 @@ import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
 /**
- * A {@link RuntimeAction} that posts {@code Attachment} to a given Slack {@code channel}.
- * <p>
- * This class relies on the {@link SlackPlatform}'s {@link com.github.seratch.jslack.Slack} client and Slack bot API
- * token to connect to the Slack API and post messages.
- * <p>
- * <b>Note:</b> this class requires that its containing {@link SlackPlatform} has been loaded with a valid Slack bot
- * API token in order to authenticate the bot and post messages.
+ * Posts {@code attachment}s to the Slack {@code channel} in the workspace identified by the provided {@code teamId}.
  */
 public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform> {
+
+    /**
+     * The unique identifier of the Slack workspace containing the channel to post the message to.
+     */
+    protected String teamId;
 
     /**
      * The Slack channel to post the attachments to.
@@ -43,21 +41,30 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     protected List<Attachment> attachments;
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
-     * {@code attachments} and {@code channel}.
+     * Constructs a {@link PostAttachmentsMessage} instance with the provided {@code runtimePlatform}, {@code session},
+     * {@code attachments}, {@code channel}, and {@code teamId}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
      * @param attachments     the {@link Attachment} list to post
      * @param channel         the Slack channel to post the attachments to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
+     *                        attachment to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the text parameter of each entry of the provided {@code attachments} list
-     *                                  is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @throws IllegalArgumentException if the text parameter of any entry of the provided {@code attachments} list
+     *                                  is {@code null} or empty, or if the provided {@code channel} or {@code teamId
+     *                                  } is {@code null} or empty
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, List<Attachment> attachments,
-                                  String channel) {
+                                  String channel, String teamId) {
         super(runtimePlatform, session);
+
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
+
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -72,8 +79,9 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
-     * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, {@code timestamp} and {@code channel}.
+     * Constructs a {@link PostAttachmentsMessage} instance with the provided {@code runtimePlatform}, {@code session},
+     * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, {@code timestamp}, {@code channel}, and
+     * {@code teamId}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
@@ -82,13 +90,21 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
      * @param text            the text of the {@link Attachment} to post
      * @param attchColor      the color of the {@link Attachment} to post in HEX format
      * @param timestamp       the timestamp of the {@link Attachment} to post in epoch format
+     * @param channel         the Slack channel to post the attachments to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
+     *                        attachment to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty, or if the
+     *                                  provided {@code channel} or {@code teamId} is {@code null} or empty
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                  String text, String attchColor, String timestamp, String channel) {
+                                  String text, String attchColor, String timestamp, String channel, String teamId) {
         super(runtimePlatform, session);
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -104,8 +120,8 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
-     * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, and {@code channel}.
+     * Constructs a {@link PostAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
+     * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, {@code channel}, and {@code teamId}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
@@ -113,13 +129,21 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
      * @param title           the title of the {@link Attachment} to post
      * @param text            the text of the {@link Attachment} to post
      * @param attchColor      the color of the {@link Attachment} to post in HEX format
+     * @param channel         the Slack channel to post the attachment to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
+     *                        attachment to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty, or if the
+     * provided {@code channel} or {@code teamId} is {@code null} or empty
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                  String text, String attchColor, String channel) {
+                                  String text, String attchColor, String channel, String teamId) {
         super(runtimePlatform, session);
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -136,7 +160,7 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     /**
-     * Posts the provided {@code attachments} to the given {@code channel}.
+     * Posts the provided {@code attachments} to the {@code teamId} workspace's {@code channel}.
      * <p>
      * This method relies on the containing {@link SlackPlatform}'s Slack bot API token to authenticate the bot and
      * post the {@code attachments} to the given {@code channel}.
@@ -148,8 +172,8 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     @Override
     public Object compute() throws IOException {
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                .token(runtimePlatform.getSlackToken())
-                .channel(this.runtimePlatform.getChannelId(channel))
+                .token(runtimePlatform.getSlackToken(teamId))
+                .channel(this.runtimePlatform.getChannelId(teamId, channel))
                 .attachments(attachments)
                 .unfurlLinks(true)
                 .unfurlMedia(true)
@@ -170,15 +194,15 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     /**
-     * Constructs a new {@link Attachment} with the provided {@code pretext}, {@code title}, {@code text}, {@code
+     * Creates a new {@link Attachment} with the provided {@code pretext}, {@code title}, {@code text}, {@code
      * attchColor}, {@code timestamp}.
      *
-     * @param pretext    the pretext of the {@link Attachment} to post
-     * @param title      the title of the {@link Attachment} to post
-     * @param text       the text of the {@link Attachment} to post
-     * @param color the color of the {@link Attachment} to post in HEX format
-     * @param timestamp  the timestamp of the {@link Attachment} to post in epoch
-     *                   format
+     * @param pretext   the pretext of the {@link Attachment} to post
+     * @param title     the title of the {@link Attachment} to post
+     * @param text      the text of the {@link Attachment} to post
+     * @param color     the color of the {@link Attachment} to post in HEX format
+     * @param timestamp the timestamp of the {@link Attachment} to post in epoch
+     *                  format
      */
     private Attachment createAttachment(String pretext, String title, String text, String color, String timestamp) {
         Attachment.AttachmentBuilder attachmentBuilder = Attachment.builder();
@@ -193,6 +217,6 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
 
     @Override
     protected XatkitSession getClientSession() {
-        return this.runtimePlatform.createSessionFromChannel(channel);
+        return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

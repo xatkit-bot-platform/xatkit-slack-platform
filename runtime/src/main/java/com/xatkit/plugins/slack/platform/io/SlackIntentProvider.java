@@ -1,6 +1,5 @@
 package com.xatkit.plugins.slack.platform.io;
 
-import com.github.seratch.jslack.Slack;
 import com.github.seratch.jslack.api.methods.SlackApiException;
 import com.github.seratch.jslack.api.methods.request.auth.AuthTestRequest;
 import com.github.seratch.jslack.api.methods.request.users.UsersInfoRequest;
@@ -28,23 +27,22 @@ import org.apache.commons.configuration2.Configuration;
 import javax.websocket.CloseReason;
 import javax.websocket.DeploymentException;
 import java.io.IOException;
-import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
-import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
- * A Slack user {@link ChatIntentProvider}.
+ * A Slack-based {@link ChatIntentProvider}.
  * <p>
- * This class relies on the Slack RTM API to receive direct messages and react to them. Note that this input provider
- * only captures direct messages sent to the Slack bot associated to this class.
+ * This class relies on the Slack RTM API to receive direct messages from workspaces where the Slack app is
+ * installed and react to them.
  * <p>
- * Instances of this class must be configured with a {@link Configuration} instance holding the Slack bot API token
- * in the property {@link SlackUtils#SLACK_TOKEN_KEY}. This token is used to authenticate the bot and receive
- * messages through the RTM API.
+ * This class loads the Slack {@code token}s stored in its containing {@link SlackPlatform} to initialize its RTM
+ * listeners. New installations of the Slack app are handled by {@link #notifyNewInstallation(String, String)}.
  *
  * @see SlackUtils
  * @see RuntimeEventProvider
@@ -52,16 +50,16 @@ import static java.util.Objects.nonNull;
 public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
 
     /**
-     * The default username returned by {@link #getUsernameFromUserId(String)}.
+     * The default username returned by {@link #getUsernameFromUserId(String, String)}.
      *
-     * @see #getUsernameFromUserId(String)
+     * @see #getUsernameFromUserId(String, String)
      */
     private static String DEFAULT_USERNAME = "unknown user";
 
     /**
-     * The delay (in ms) to wait before attempting to reconnect the RTM client.
+     * The delay (in ms) to wait before attempting to reconnect disconnected RTM clients.
      * <p>
-     * When the RTM client is disconnected abnormally the {@link SlackIntentProvider} attempts to reconnect it by
+     * When a RTM client is disconnected abnormally the {@link SlackIntentProvider} attempts to reconnect it by
      * waiting {@code RECONNECT_WAIT_TIME * <number_of_attempts>} ms. The delay is reset after each successful
      * reconnection.
      *
@@ -74,25 +72,15 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * <p>
      * This token is used to authenticate the bot and receive messages through the RTM API.
      */
-    private String slackToken;
+//    private String slackToken;
+
 
     /**
-     * The {@link String} representing the Slack bot identifier.
+     * The {@link Map} containing the {@link RTMClient}s associated to each workspace where the Slack app is installed.
      * <p>
-     * This identifier is used to check input message and filter the ones that are sent by this bot, in order to avoid
-     * infinite message loops.
+     * Keys in this {@link Map} are {@code teamId}.
      */
-    private String botId;
-
-    /**
-     * The {@link RTMClient} managing the RTM connection to the Slack API.
-     */
-    private RTMClient rtmClient;
-
-    /**
-     * The Slack API client used to retrieve Slack-related information.
-     */
-    private Slack slack;
+    private Map<String, RTMClient> rtmClients;
 
     /**
      * The {@link JsonParser} used to manipulate Slack API answers.
@@ -115,46 +103,49 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * Constructs a new {@link SlackIntentProvider} from the provided {@code runtimePlatform} and
      * {@code configuration}.
      * <p>
-     * This constructor initializes the underlying RTM connection and creates a message listener that forwards to
-     * the {@code xatkitCore} instance not empty direct messages sent by users (not bots) to the Slack bot associated
-     * to this class.
-     * <p>
-     * <b>Note:</b> {@link SlackIntentProvider} requires a valid Slack bot API token to be initialized, and calling
-     * the default constructor will throw an {@link IllegalArgumentException} when looking for the Slack bot API token.
+     * This constructor initializes the underlying RTM connections and creates a message listener that forwards to
+     * the {@code xatkitCore} instance not empty messages sent in channels the bot is listening to.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this {@link SlackIntentProvider}
      * @param configuration   the {@link Configuration} used to retrieve the Slack bot API token
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code configuration} is {@code
-     *                                  null}
-     * @throws IllegalArgumentException if the provided Slack bot API token is {@code null} or empty
+     * @throws NullPointerException if the provided {@code runtimePlatform} or {@code configuration} is {@code
+     *                              null}
+     * @throws XatkitException      if an error occurred when starting the RTM clients
      */
     public SlackIntentProvider(SlackPlatform runtimePlatform, Configuration configuration) {
         super(runtimePlatform, configuration);
         checkNotNull(configuration, "Cannot construct a SlackIntentProvider from a null configuration");
-        this.slackToken = configuration.getString(SlackUtils.SLACK_TOKEN_KEY);
-        checkArgument(nonNull(slackToken) && !slackToken.isEmpty(), "Cannot construct a SlackIntentProvider from the " +
-                "provided token %s, please ensure that the Xatkit configuration contains a valid Slack bot API token " +
-                "associated to the key %s", slackToken, SlackUtils.SLACK_TOKEN_KEY);
-        this.ignoreFallbackOnGroupChannels = configuration.getBoolean(SlackUtils.IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY,
-                SlackUtils.DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS);
+        this.ignoreFallbackOnGroupChannels =
+                configuration.getBoolean(SlackUtils.IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY,
+                        SlackUtils.DEFAULT_IGNORE_FALLBACK_ON_GROUP_CHANNELS);
         this.listenMentionsOnGroupChannels =
                 configuration.getBoolean(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY,
                         SlackUtils.DEFAULT_LISTEN_MENTIONS_ON_GROUP_CHANNELS);
-        this.slack = new Slack();
-        this.botId = getSelfId();
-        try {
-            this.rtmClient = slack.rtm(slackToken);
-        } catch (IOException e) {
-            String errorMessage = MessageFormat.format("Cannot connect SlackIntentProvider, please ensure that the " +
-                            "bot API token is valid and stored in Xatkit configuration with the key {0}",
-                    SlackUtils.SLACK_TOKEN_KEY);
-            Log.error(errorMessage);
-            throw new XatkitException(errorMessage, e);
-        }
         this.jsonParser = new JsonParser();
-        Log.info("Starting to listen Slack direct messages");
-        rtmClient.addMessageHandler(new XatkitRTMMessageHandler());
-        rtmClient.addCloseHandler(new XatkitRTMCloseHandler());
+        this.rtmClients = new HashMap<>();
+        this.runtimePlatform.getTeamIdToSlackTokenMap().forEach(this::notifyNewInstallation);
+    }
+
+    /**
+     * Starts a new {@link RTMClient} for the provided {@code teamId} and {@code token}.
+     * <p>
+     * This method is typically called when the Slack app is installed in a new workspace. In this case this provider
+     * starts a new {@link RTMClient} associated to the provided {@code teamId} that will listen to the new
+     * installation.
+     *
+     * @param teamId the identifier of the workspace where the bot has been installed
+     * @param token  the Slack {@code token} corresponding to the new installation
+     */
+    public void notifyNewInstallation(String teamId, String token) {
+        String workspaceBotId = this.getSelfId(token);
+        RTMClient rtmClient;
+        try {
+            rtmClient = this.runtimePlatform.getSlack().rtm(token);
+        } catch (IOException e) {
+            throw new XatkitException("An error occurred when starting the RTM client, see the attached exception", e);
+        }
+        rtmClient.addMessageHandler(new XatkitRTMMessageHandler(workspaceBotId));
+        rtmClient.addCloseHandler(new XatkitRTMCloseHandler(teamId));
         try {
             rtmClient.connect();
         } catch (DeploymentException | IOException e) {
@@ -162,20 +153,23 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
             Log.error(errorMessage);
             throw new XatkitException(errorMessage, e);
         }
+        rtmClients.put(teamId, rtmClient);
     }
 
     /**
-     * Returns the Slack bot identifier.
+     * Returns the unique identifier of the bot in the workspace defined by the provided {@code slackToken}.
      * <p>
-     * This identifier is used to check input message and filter the ones that are sent by this bot, in order to avoid
-     * infinite message loops.
+     * This identifier is used to check input messages and filter the ones that are sent by this bot, in order to
+     * avoid infinite message loops. Note that only messages from this specific bot are ignored. This allows to
+     * define bot swarms where each bot can interact with the other ones.
      *
-     * @return the Slack bot identifier
+     * @param slackToken the Slack {@code token} corresponding to the workspace to get the bot identifier from
+     * @return the unique identifier of the bot in the provide workspace
      */
-    protected String getSelfId() {
+    protected String getSelfId(String slackToken) {
         AuthTestRequest request = AuthTestRequest.builder().token(slackToken).build();
         try {
-            AuthTestResponse response = slack.methods().authTest(request);
+            AuthTestResponse response = this.runtimePlatform.getSlack().methods().authTest(request);
             logSlackApiResponse(response);
             return response.getUserId();
         } catch (IOException | SlackApiException e) {
@@ -184,7 +178,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     }
 
     /**
-     * Returns the Slack username associated to the provided {@code userId}.
+     * Returns the Slack username associated to the provided {@code teamId} and {@code userId}.
      * <p>
      * This method returns the <i>display name</i> associated to the provided {@code userId} if it is set in the user
      * profile. If the user profile does not contain a non-empty display name this method returns the <i>real
@@ -193,13 +187,14 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * This method returns {@link #DEFAULT_USERNAME} if the Slack API is not reachable or if the provided {@code
      * userId} does not match any known user.
      *
+     * @param teamId the identifier of the workspace to retrieve the username from
      * @param userId the user identifier to retrieve the username from
      * @return the Slack username associated to the provided {@code userId}
      */
-    private String getUsernameFromUserId(String userId) {
+    private String getUsernameFromUserId(String teamId, String userId) {
         String username = DEFAULT_USERNAME;
         try {
-            User user = getUserFromUserId(userId);
+            User user = getUserFromUserId(teamId, userId);
             if (nonNull(user)) {
                 User.Profile profile = user.getProfile();
                 /*
@@ -222,18 +217,19 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     }
 
     /**
-     * Returns the Slack user email associated to the provided {@code userId}.
+     * Returns the Slack user email associated to the provided {@code teamId} and {@code userId}.
      * <p>
      * This method returns the email set in the user's profile. If an error occurred or if the email is not set an
      * empty {@link String} is returned.
      *
+     * @param teamId the identifier of the workspace to retrieve the user email from
      * @param userId the user identifier to retrieve the user email from
      * @return the Slack user email associated to the provided {@code userId}
      */
-    private String getUserEmailFromUserId(String userId) {
+    private String getUserEmailFromUserId(String teamId, String userId) {
         String email = "";
         try {
-            User user = getUserFromUserId(userId);
+            User user = getUserFromUserId(teamId, userId);
             if (nonNull(user)) {
                 User.Profile profile = user.getProfile();
                 email = profile.getEmail();
@@ -247,36 +243,38 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     }
 
     /**
-     * Retrieves the {@link User} instance associated to the provided {@code userId}.
+     * Retrieves the {@link User} instance associated to the provided {@code teamId} and {@code userId}.
      * <p>
      * This method is used to access user-related information. Note that each call to this method will call the Slack
      * API (see #3).
      *
+     * @param teamId the identifier of the workspace to retrieve the {@link User} instance from
      * @param userId the user identifier to retrieve the {@link User} instance from
      * @return the {@link User} instance associated to the provided {@code userId}
      * @throws SlackApiException if the Slack API returns an error
      * @throws IOException       if an error occurred when reaching the Slack API
      */
-    private User getUserFromUserId(String userId) throws SlackApiException, IOException {
+    private User getUserFromUserId(String teamId, String userId) throws SlackApiException, IOException {
         Log.info("Retrieving User for the user ID {0}", userId);
         UsersInfoRequest usersInfoRequest = UsersInfoRequest.builder()
-                .token(slackToken)
+                .token(this.runtimePlatform.getSlackToken(teamId))
                 .user(userId)
                 .build();
-        UsersInfoResponse response = slack.methods().usersInfo(usersInfoRequest);
+        UsersInfoResponse response = this.runtimePlatform.getSlack().methods().usersInfo(usersInfoRequest);
         logSlackApiResponse(response);
         return response.getUser();
     }
 
     /**
-     * Returns the {@link RTMClient} associated to this class.
+     * Returns the {@link RTMClient} associated to the workspace defined by the provided {@code teamId}.
      * <p>
      * <b>Note:</b> this method is protected for testing purposes, and should not be called by client code.
      *
+     * @param teamId the identifier of the workspace to retrieve the {@link RTMClient} from
      * @return the {@link RTMClient} associated to this class
      */
-    protected RTMClient getRtmClient() {
-        return rtmClient;
+    protected RTMClient getRtmClient(String teamId) {
+        return rtmClients.get(teamId);
     }
 
     @Override
@@ -295,24 +293,43 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
     }
 
     /**
-     * Disconnects the underlying Slack RTM client.
+     * Disconnects the underlying Slack RTM clients.
      */
     @Override
     public void close() {
-        Log.info("Closing Slack RTM connection");
-        try {
-            this.rtmClient.disconnect();
-        } catch (IOException e) {
-            String errorMessage = "Cannot close the Slack RTM connection";
-            Log.error(errorMessage);
-            throw new XatkitException(errorMessage, e);
-        }
+        Log.info("Closing Slack RTM clients");
+        this.rtmClients.forEach((teamId, rtmClient) -> {
+            try {
+                rtmClient.disconnect();
+            } catch (IOException e) {
+                Log.error("Cannot disconnect the RTM client for workspace {0}, see the attached exception", teamId,
+                        e);
+            }
+        });
     }
 
     /**
      * The {@link RTMMessageHandler} used to process user messages.
      */
     private class XatkitRTMMessageHandler implements RTMMessageHandler {
+
+        /**
+         * The unique identifier of the bot in the workspace this handler listens to.
+         * <p>
+         * This identifier is used to check input messages and filter the ones that are sent by this bot, in order to
+         * avoid infinite message loops. Note that only messages from this specific bot are ignored. This allows to
+         * define bot swarms where each bot can interact with the other ones.
+         */
+        private String botSelfId;
+
+        /**
+         * Constructs a {@link XatkitRTMMessageHandler} with the provided {@code botSelfId}.
+         *
+         * @param botSelfId the unique identifier of the bot in the workspace this handler listens to
+         */
+        public XatkitRTMMessageHandler(String botSelfId) {
+            this.botSelfId = botSelfId;
+        }
 
         @Override
         public void handle(String message) {
@@ -329,137 +346,153 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                     /*
                      * The message hasn't been sent by a bot
                      */
-                    JsonElement channelObject = json.get("channel");
-                    if (nonNull(channelObject)) {
-                        /*
-                         * The message channel is set
-                         */
-                        String channel = channelObject.getAsString();
-                        JsonElement userObject = json.get("user");
-                        if (nonNull(userObject)) {
+                    JsonElement teamObject = json.get("team");
+                    if (nonNull(teamObject)) {
+                        String team = teamObject.getAsString();
+                        JsonElement channelObject = json.get("channel");
+                        if (nonNull(channelObject)) {
                             /*
-                             * The name of the user that sent the message
+                             * The message channel is set
                              */
-                            String user = userObject.getAsString();
-                            if (!user.equals(botId)) {
-                                JsonElement textObject = json.get("text");
-                                if (nonNull(textObject)) {
-                                    String text = textObject.getAsString();
-                                    if (!text.isEmpty()) {
-                                        Log.info("Received message {0} from user {1} (channel: {2})", text,
-                                                user, channel);
+                            String channel = channelObject.getAsString();
+                            JsonElement userObject = json.get("user");
+                            if (nonNull(userObject)) {
+                                /*
+                                 * The name of the user that sent the message
+                                 */
+                                String user = userObject.getAsString();
+                                if (!user.equals(botSelfId)) {
+                                    JsonElement textObject = json.get("text");
+                                    if (nonNull(textObject)) {
+                                        String text = textObject.getAsString();
+                                        if (!text.isEmpty()) {
+                                            Log.info("Received message {0} from user {1} (channel: {2})", text,
+                                                    user, channel);
 
-                                        if (listenMentionsOnGroupChannels && SlackIntentProvider.this.runtimePlatform.isGroupChannel(channel)) {
-                                            String botMention = "<@" + SlackIntentProvider.this.getSelfId() + ">";
-                                            if (text.contains(botMention)) {
-                                                /*
-                                                 * The message contains a mention to the bot, we need to remove it
-                                                 * before sending it to the NLP engine to avoid pollution and false
-                                                 * negative matches.
-                                                 */
-                                                text = text.replaceAll(botMention, "").trim();
-                                            } else {
-                                                /*
-                                                 * Nothing to do, the bot listens to mentions and the message is not
-                                                 * a mention.
-                                                 */
-                                                return;
+                                            if (listenMentionsOnGroupChannels && SlackIntentProvider.this.runtimePlatform.isGroupChannel(team, channel)) {
+//                                                String botMention = "<@" + SlackIntentProvider.this.getSelfId() + ">";
+                                                String botMention = "<@" + botSelfId + ">";
+                                                if (text.contains(botMention)) {
+                                                    /*
+                                                     * The message contains a mention to the bot, we need to remove it
+                                                     * before sending it to the NLP engine to avoid pollution and false
+                                                     * negative matches.
+                                                     */
+                                                    text = text.replaceAll(botMention, "").trim();
+                                                } else {
+                                                    /*
+                                                     * Nothing to do, the bot listens to mentions and the message is not
+                                                     * a mention.
+                                                     */
+                                                    return;
+                                                }
                                             }
-                                        }
 
-                                        /*
-                                         * Extract thread-related information. The thread_ts field contains a value
-                                         * if the received message is part of a thread, otherwise the field is not
-                                         * specified.
-                                         */
-                                        JsonElement threadTsObject = json.get("thread_ts");
-                                        String threadTs = "";
-                                        if (nonNull(threadTsObject)) {
-                                            threadTs = threadTsObject.getAsString();
-                                        }
-
-                                        JsonElement tsObject = json.get("ts");
-                                        String messageTs = "";
-                                        if (nonNull(tsObject)) {
-                                            messageTs = tsObject.getAsString();
-                                        }
-
-                                        XatkitSession session = runtimePlatform.createSessionFromChannel(channel);
-                                        /*
-                                         * Call getRecognizedIntent before setting any context variable, the
-                                         * recognition triggers a decrement of all the context variables.
-                                         */
-                                        RecognizedIntent recognizedIntent =
-                                                IntentRecognitionHelper.getRecognizedIntent(text, session,
-                                                SlackIntentProvider.this.xatkitCore);
-                                        /*
-                                         * The slack-related values are stored in the local context with a
-                                         * lifespan count of 1: they are reset every time a message is
-                                         * received, and may cause consistency issues when using multiple
-                                         * IntentProviders.
-                                         */
-                                        session.getRuntimeContexts().setContextValue(SlackUtils
-                                                .SLACK_CONTEXT_KEY, 1, SlackUtils
-                                                .CHAT_CHANNEL_CONTEXT_KEY, channel);
-                                        session.getRuntimeContexts().setContextValue(SlackUtils
-                                                .SLACK_CONTEXT_KEY, 1, SlackUtils
-                                                .CHAT_USERNAME_CONTEXT_KEY, getUsernameFromUserId(user));
-                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
-                                                SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
-                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
-                                                SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY, getUserEmailFromUserId(user));
-                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
-                                                SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
-                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
-                                                SlackUtils.SLACK_THREAD_TS, threadTs);
-                                        session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY, 1,
-                                                SlackUtils.SLACK_MESSAGE_TS, messageTs);
-
-                                        /*
-                                         * Copy the variables in the chat context (this context is inherited from the
-                                         * Chat platform)
-                                         */
-                                        session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                ChatUtils.CHAT_CHANNEL_CONTEXT_KEY, channel);
-                                        session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                ChatUtils.CHAT_USERNAME_CONTEXT_KEY, getUsernameFromUserId(user));
-                                        session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                ChatUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
-
-                                        if (recognizedIntent.getDefinition().getName().equals(
-                                                "Default_Fallback_Intent") && ignoreFallbackOnGroupChannels) {
                                             /*
-                                             * First check the property, if fallback intents are not ignored no need to
-                                             * check if this is a group channel or not (this may trigger additional
-                                             * Slack
-                                             * API calls).
+                                             * Extract thread-related information. The thread_ts field contains a value
+                                             * if the received message is part of a thread, otherwise the field is not
+                                             * specified.
                                              */
-                                            if (!SlackIntentProvider.this.runtimePlatform.isGroupChannel(channel)) {
-                                                SlackIntentProvider.this.sendEventInstance(recognizedIntent, session);
-                                            } else {
+                                            JsonElement threadTsObject = json.get("thread_ts");
+                                            String threadTs = "";
+                                            if (nonNull(threadTsObject)) {
+                                                threadTs = threadTsObject.getAsString();
+                                            }
+
+                                            JsonElement tsObject = json.get("ts");
+                                            String messageTs = "";
+                                            if (nonNull(tsObject)) {
+                                                messageTs = tsObject.getAsString();
+                                            }
+
+                                            XatkitSession session =
+                                                    runtimePlatform.createSessionFromChannel(team, channel);
+                                            /*
+                                             * Call getRecognizedIntent before setting any context variable, the
+                                             * recognition triggers a decrement of all the context variables.
+                                             */
+                                            RecognizedIntent recognizedIntent =
+                                                    IntentRecognitionHelper.getRecognizedIntent(text, session,
+                                                            SlackIntentProvider.this.xatkitCore);
+                                            /*
+                                             * The slack-related values are stored in the local context with a
+                                             * lifespan count of 1: they are reset every time a message is
+                                             * received, and may cause consistency issues when using multiple
+                                             * IntentProviders.
+                                             */
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.SLACK_TEAM_CONTEXT_KEY, team);
+                                            session.getRuntimeContexts().setContextValue(SlackUtils
+                                                            .SLACK_CONTEXT_KEY, 1, SlackUtils.CHAT_CHANNEL_CONTEXT_KEY,
+                                                    channel);
+                                            session.getRuntimeContexts().setContextValue(SlackUtils
+                                                            .SLACK_CONTEXT_KEY, 1, SlackUtils.CHAT_USERNAME_CONTEXT_KEY,
+                                                    getUsernameFromUserId(team, user));
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY,
+                                                    getUserEmailFromUserId(team, user));
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.SLACK_THREAD_TS, threadTs);
+                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
+                                                    , 1, SlackUtils.SLACK_MESSAGE_TS, messageTs);
+
+                                            /*
+                                             * Copy the variables in the chat context (this context is inherited from
+                                             *  the
+                                             * Chat platform)
+                                             */
+                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
+                                                    ChatUtils.CHAT_CHANNEL_CONTEXT_KEY, channel);
+                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
+                                                    ChatUtils.CHAT_USERNAME_CONTEXT_KEY,
+                                                    getUsernameFromUserId(team, user));
+                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
+                                                    ChatUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
+
+                                            if (recognizedIntent.getDefinition().getName().equals(
+                                                    "Default_Fallback_Intent") && ignoreFallbackOnGroupChannels) {
                                                 /*
-                                                 * Do nothing, fallback intents are ignored in group channels and
-                                                 * this is a group channel.
+                                                 * First check the property, if fallback intents are not ignored no
+                                                 * need to
+                                                 * check if this is a group channel or not (this may trigger additional
+                                                 * Slack
+                                                 * API calls).
                                                  */
+                                                if (!SlackIntentProvider.this.runtimePlatform.isGroupChannel(team,
+                                                        channel)) {
+                                                    SlackIntentProvider.this.sendEventInstance(recognizedIntent,
+                                                            session);
+                                                } else {
+                                                    /*
+                                                     * Do nothing, fallback intents are ignored in group channels and
+                                                     * this is a group channel.
+                                                     */
+                                                }
+                                            } else {
+                                                SlackIntentProvider.this.sendEventInstance(recognizedIntent, session);
                                             }
                                         } else {
-                                            SlackIntentProvider.this.sendEventInstance(recognizedIntent, session);
+                                            Log.warn("Received an empty message, skipping it");
                                         }
                                     } else {
-                                        Log.warn("Received an empty message, skipping it");
+                                        Log.warn("The message does not contain a \"text\" field, skipping it");
                                     }
                                 } else {
-                                    Log.warn("The message does not contain a \"text\" field, skipping it");
+                                    Log.trace("Skipping {0}, the message was sent by this bot", json);
                                 }
                             } else {
-                                Log.trace("Skipping {0}, the message was sent by this bot", json);
+                                Log.warn("Skipping {0}, the message does not contain a \"user\" field",
+                                        json);
                             }
                         } else {
-                            Log.warn("Skipping {0}, the message does not contain a \"user\" field",
-                                    json);
+                            Log.warn("Skipping {0}, the message does not contain a \"channel\" field", json);
                         }
                     } else {
-                        Log.warn("Skipping {0}, the message does not contain a \"channel\" field", json);
+                        Log.warn("Skipping {0}, the message does not contain a \"team\" field", json);
                     }
                 } else {
                     Log.trace("Skipping {0}, the message type is not \"{1}\"", json, SlackUtils.MESSAGE_TYPE);
@@ -481,20 +514,29 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      */
     private class XatkitRTMCloseHandler implements RTMCloseHandler {
 
+        private String teamId;
+
+        public XatkitRTMCloseHandler(String teamId) {
+            this.teamId = teamId;
+        }
+
         @Override
         public void handle(CloseReason reason) {
             if (reason.getCloseCode().equals(CloseReason.CloseCodes.CLOSED_ABNORMALLY)) {
                 Log.error("Connection to the Slack RTM client lost");
-                int attempts = 1;
+                int attempts = 0;
                 while (true) {
                     try {
+                        attempts++;
                         int waitTime = attempts * RECONNECT_WAIT_TIME;
                         Log.info("Trying to reconnect in {0}ms", waitTime);
                         Thread.sleep(waitTime);
-                        rtmClient = slack.rtm(slackToken);
-                        rtmClient.addMessageHandler(new XatkitRTMMessageHandler());
-                        rtmClient.addCloseHandler(new XatkitRTMCloseHandler());
+                        String slackToken = SlackIntentProvider.this.getRuntimePlatform().getSlackToken(teamId);
+                        RTMClient rtmClient = SlackIntentProvider.this.getRuntimePlatform().getSlack().rtm(slackToken);
+                        rtmClient.addMessageHandler(new XatkitRTMMessageHandler(SlackIntentProvider.this.getSelfId(slackToken)));
+                        rtmClient.addCloseHandler(new XatkitRTMCloseHandler(teamId));
                         rtmClient.connect();
+                        rtmClients.put(teamId, rtmClient);
                         /*
                          * The RTM client is reconnected and the handlers are set.
                          */
