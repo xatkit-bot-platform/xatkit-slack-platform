@@ -4,7 +4,6 @@ import com.github.seratch.jslack.api.methods.SlackApiException;
 import com.github.seratch.jslack.api.methods.request.chat.ChatPostMessageRequest;
 import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageResponse;
 import com.xatkit.core.XatkitException;
-import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeMessageAction;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
@@ -19,15 +18,14 @@ import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static java.util.Objects.nonNull;
 
 /**
- * A {@link RuntimeAction} that posts a {@code message} to a given Slack {@code channel}.
- * <p>
- * This class relies on the {@link SlackPlatform}'s {@link com.github.seratch.jslack.Slack} client and Slack bot API
- * token to connect to the Slack API and post messages.
- * <p>
- * <b>Note:</b> this class requires that its containing {@link SlackPlatform} has been loaded with a valid Slack bot
- * API token in order to authenticate the bot and post messages.
+ * Posts a {@code message} to the Slack {@code channel} in the workspace identified by the provided {@code teamId}.
  */
 public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
+
+    /**
+     * The unique identifier of the Slack workspace containing the channel to post the message to.
+     */
+    protected String teamId;
 
     /**
      * The Slack channel to post the message to.
@@ -40,62 +38,71 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
     protected String threadTs;
 
     /**
-     * Constructs a new {@link PostMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
-     * message} and {@code channel}.
+     * Constructs a {@link PostMessage} instance with the provided {@code runtimePlatform}, {@code session}, {@code
+     * message}, {@code channel}, and {@code teamId}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
      * @param message         the message to post
      * @param channel         the Slack channel to post the message to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code message} or {@code channel} is {@code null} or empty.
+     * @throws IllegalArgumentException if the provided {@code message}, {@code channel}, or {@code teamId} is {@code
+     *                                  null} or empty.
      */
-    public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel) {
-        this(runtimePlatform, session, message, channel, null);
+    public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel,
+                       String teamId) {
+        this(runtimePlatform, session, message, channel, teamId, null);
     }
 
     /**
      * Constructs a new {@link PostMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
-     * message}, {@code channel}, and {@code threadTs}.
+     * message}, {@code channel}, {@code teamId}, and {@code threadTs}.
      *
      * @param runtimePlatform the {@link SlackPlatform} containing this action
      * @param session         the {@link XatkitSession} associated to this action
      * @param message         the message to post
      * @param channel         the Slack channel to post the message to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
      * @param threadTs        the timestamp of the thread to post the message to
+     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
+     * @throws IllegalArgumentException if the provided {@code message}, {@code channel}, or {@code teamId} is {@code
+     *                                  null} or empty.
      */
     public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel,
-                       @Nullable String threadTs) {
+                       String teamId, @Nullable String threadTs) {
         super(runtimePlatform, session, message);
 
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided teamId " +
+                "%s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
+        this.channel = channel;
         /*
          * Do not check if threadTs is null, it is the case if the user input is not in a thread.
          */
-        this.channel = channel;
         this.threadTs = threadTs;
     }
 
     /**
-     * Posts the provided {@code message} to the given {@code channel} and {@code threadTs}.
+     * Posts the provided {@code message} to the {@code teamId} workspace's {@code channel} with the given {@code
+     * threadTs}.
      * <p>
      * <b>Note</b>: if {@code threadTs} is {@code null} this method posts the provided {@code message} in the
      * {@code channel} itself. If {@code threadTs} contains a value the provided {@code message} is posted as a reply
      * to the thread.
      * <p>
-     * This method relies on the containing {@link SlackPlatform}'s Slack bot API token to authenticate the bot and
-     * post the {@code message} to the given {@code channel}.
      *
-     * @return {@code null}
-     * @throws IOException     if an I/O error occurred when sending the message
-     * @throws XatkitException if the provided token does not authenticate the bot
+     * @return the {@code timestamp} of the posted message
+     * @throws XatkitException if an error occurred when sending the message
      */
     @Override
-    public Object compute() throws IOException {
+    public Object compute() {
         ChatPostMessageRequest.ChatPostMessageRequestBuilder builder = ChatPostMessageRequest.builder();
-        builder.token(runtimePlatform.getSlackToken())
-                .channel(this.runtimePlatform.getChannelId(channel))
+        builder.token(runtimePlatform.getSlackToken(teamId))
+                .channel(this.runtimePlatform.getChannelId(teamId, channel))
                 .text(message)
                 .unfurlLinks(true)
                 .unfurlMedia(true);
@@ -110,17 +117,16 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
                 Log.trace("Request {0} successfully sent to the Slack API", request);
                 return response.getTs();
             } else {
-                Log.error("An error occurred when processing the request {0}: received response {1}", request,
-                        response);
+                throw new XatkitException(MessageFormat.format("An error occurred when processing the request {0}: " +
+                        "received response {1}", request, response));
             }
-        } catch (SlackApiException e) {
+        } catch (SlackApiException | IOException e) {
             throw new XatkitException(MessageFormat.format("Cannot send the message {0} to the Slack API", request), e);
         }
-        return null;
     }
 
     @Override
     protected XatkitSession getClientSession() {
-        return this.runtimePlatform.createSessionFromChannel(channel);
+        return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

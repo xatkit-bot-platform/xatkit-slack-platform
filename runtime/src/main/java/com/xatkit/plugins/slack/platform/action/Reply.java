@@ -1,6 +1,5 @@
 package com.xatkit.plugins.slack.platform.action;
 
-import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.SlackUtils;
@@ -12,16 +11,10 @@ import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
 
 /**
- * A {@link RuntimeAction} that replies to a message using the input Slack channel.
+ * Replies to a message using the input {@code teamId} workspace's {@code channel}.
  * <p>
- * This action relies on the provided {@link XatkitSession} to retrieve the Slack {@code channel} associated to the
- * user input.
- * <p>
- * This class relies on the {@link SlackPlatform}'s {@link com.github.seratch.jslack.Slack} client and Slack bot API
- * token to connect to the Slack API and post the reply message.
- * <p>
- * <b>Note:</b> this class requires that its containing {@link SlackPlatform} has been loaded with a valid Slack bot API
- * token in order to authenticate the bot and post messages.
+ * This action relies on the provided {@link XatkitSession} to retrieve the Slack {@code teamId} and {@code channel}
+ * associated to the user input.
  *
  * @see PostMessage
  */
@@ -53,6 +46,31 @@ public class Reply extends PostMessage {
         return (String) channelValue;
     }
 
+
+    /**
+     * Returns the Slack team identifier associated to the user input.
+     * <p>
+     * This method searches in the provided {@link RuntimeContexts} for the value stored with the key
+     * {@link SlackUtils#SLACK_CONTEXT_KEY}.{@link SlackUtils#SLACK_TEAM_CONTEXT_KEY}. Note that if the provided
+     * {@link RuntimeContexts} does not contain the requested value a {@link NullPointerException} is thrown.
+     *
+     * @param context the {@link RuntimeContexts} to retrieve the team identifier from
+     * @return the team identifier associated to the user input
+     * @throws NullPointerException     if the provided {@code context} is {@code null}, or if it does not contain the
+     *                                  team identifier information
+     * @throws IllegalArgumentException if the retrieve team identifier is not a {@link String}
+     * @see SlackUtils
+     */
+    public static String getTeamId(RuntimeContexts context) {
+        checkNotNull(context, "Cannot retrieve the team from the provided %s %s",
+                RuntimeContexts.class.getSimpleName(), context);
+        Object teamValue = context.getContextValue(SlackUtils.SLACK_CONTEXT_KEY, SlackUtils.SLACK_TEAM_CONTEXT_KEY);
+        checkNotNull(teamValue, "Cannot retrieve the Slack team from the context");
+        checkArgument(teamValue instanceof String, "Invalid Slack team type, expected %s, found %s",
+                String.class.getSimpleName(), teamValue.getClass().getSimpleName());
+        return (String) teamValue;
+    }
+
     /**
      * Returns the threadTs timestamp associated to the user input.
      * <p>
@@ -63,7 +81,6 @@ public class Reply extends PostMessage {
      * @param context the {@link RuntimeContexts} to retrieve the threadTs timestamp from
      * @return the threadTs timestamp if it exist, or {@code null} / an empty {@link String} if it doesn't (depending
      * on the NLP provider)
-     *
      * @see SlackUtils
      */
     public static @Nullable
@@ -82,10 +99,10 @@ public class Reply extends PostMessage {
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
      * @throws IllegalArgumentException if the provided {@code message} is {@code null} or empty
      * @see #getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public Reply(SlackPlatform runtimePlatform, XatkitSession session, String message) {
         super(runtimePlatform, session, message, getChannel(session.getRuntimeContexts()),
-                getThreadTs(session.getRuntimeContexts()));
+                getTeamId(session.getRuntimeContexts()), getThreadTs(session.getRuntimeContexts()));
     }
 }

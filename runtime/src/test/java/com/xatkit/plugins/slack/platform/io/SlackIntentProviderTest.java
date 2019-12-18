@@ -30,6 +30,8 @@ public class SlackIntentProviderTest extends SlackTest {
 
     private SlackPlatform slackPlatform;
 
+    private String SLACK_TEAM_ID;
+
     private String SLACK_CHANNEL;
 
     private static EventDefinition VALID_EVENT_DEFINITION;
@@ -46,7 +48,10 @@ public class SlackIntentProviderTest extends SlackTest {
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty(SlackUtils.SLACK_TOKEN_KEY, getSlackToken());
         slackPlatform = new SlackPlatform(stubXatkitCore, configuration);
-        SLACK_CHANNEL = slackPlatform.getChannelId("général");
+        SLACK_TEAM_ID = slackPlatform.getTeamIdToSlackTokenMap().entrySet().stream()
+                .filter((entry) -> entry.getValue().equals(getSlackToken()))
+                .findAny().get().getKey();
+        SLACK_CHANNEL = slackPlatform.getChannelId(SLACK_TEAM_ID, "général");
     }
 
     @After
@@ -85,20 +90,20 @@ public class SlackIntentProviderTest extends SlackTest {
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty(SlackUtils.SLACK_TOKEN_KEY, getSlackToken());
         slackIntentProvider = new SlackIntentProvider(slackPlatform, configuration);
-        assertThat(slackIntentProvider.getRtmClient()).as("Not null RTM client").isNotNull();
+        assertThat(slackIntentProvider.getRtmClient(SLACK_TEAM_ID)).as("Not null RTM client").isNotNull();
     }
 
     @Test
     public void sendValidSlackMessage() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getValidMessage());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getValidMessage());
         assertThat(stubXatkitCore.getHandledEvents()).as("Event handled").hasSize(1);
         /*
          * Check equality on names, equals() should not be redefined for EObjects.
          */
         softly.assertThat(stubXatkitCore.getHandledEvents().get(0).getName()).as("Valid Event handled").isEqualTo
                 (VALID_EVENT_DEFINITION.getName());
-        XatkitSession session = stubXatkitCore.getXatkitSession(SLACK_CHANNEL);
+        XatkitSession session = stubXatkitCore.getXatkitSession(SLACK_TEAM_ID + "@" + SLACK_CHANNEL);
         assertThat(session).as("Not null session").isNotNull();
         Map<String, Object> slackContext =
                 session.getRuntimeContexts().getContextVariables(SlackUtils.SLACK_CONTEXT_KEY);
@@ -119,12 +124,12 @@ public class SlackIntentProviderTest extends SlackTest {
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
         slackIntentProvider = new SlackIntentProvider(slackPlatform, configuration);
-        slackIntentProvider.getRtmClient().onMessage(getValidMessageMention());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getValidMessageMention());
         assertThat(stubXatkitCore.getHandledEvents()).as("Event handled").hasSize(1);
         XatkitSession session = stubXatkitCore.getXatkitSession(SLACK_CHANNEL);
         String rawMessage = (String) session.getRuntimeContexts().getContextValue(SlackUtils.SLACK_CONTEXT_KEY,
                 SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY);
-        assertThat(rawMessage).as("Filtered mention").doesNotContain("<@" + slackIntentProvider.getSelfId() + ">");
+        assertThat(rawMessage).as("Filtered mention").doesNotContain("<@" + slackIntentProvider.getSelfId(SLACK_TEAM_ID) + ">");
     }
 
     @Test
@@ -132,14 +137,14 @@ public class SlackIntentProviderTest extends SlackTest {
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
         slackIntentProvider = new SlackIntentProvider(slackPlatform, configuration);
-        slackIntentProvider.getRtmClient().onMessage(getValidMessage());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getValidMessage());
         assertThat(stubXatkitCore.getHandledEvents()).as("No event handled").isEmpty();
     }
 
     @Test
     public void sendSlackMessageInvalidType() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getMessageInvalidType());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getMessageInvalidType());
         assertThat(stubXatkitCore.getHandledEvents()).as("Empty handled events").isEmpty();
         assertThat(stubXatkitCore.getXatkitSession(SLACK_CHANNEL)).as("Null session").isNull();
     }
@@ -147,7 +152,7 @@ public class SlackIntentProviderTest extends SlackTest {
     @Test
     public void sendSlackMessageNullText() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getMessageNullText());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getMessageNullText());
         assertThat(stubXatkitCore.getHandledEvents()).as("Empty handled events").isEmpty();
         assertThat(stubXatkitCore.getXatkitSession(SLACK_CHANNEL)).as("Null session").isNull();
     }
@@ -155,7 +160,7 @@ public class SlackIntentProviderTest extends SlackTest {
     @Test
     public void sendSlackMessageNullChannel() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getMessageNullChannel());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getMessageNullChannel());
         assertThat(stubXatkitCore.getHandledEvents()).as("Empty handled events").isEmpty();
         assertThat(stubXatkitCore.getXatkitSession(SLACK_CHANNEL)).as("Null session").isNull();
     }
@@ -163,7 +168,7 @@ public class SlackIntentProviderTest extends SlackTest {
     @Test
     public void sendSlackMessageNullUser() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getMessageNullUser());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getMessageNullUser());
         assertThat(stubXatkitCore.getHandledEvents()).as("Empty handled events").isEmpty();
         assertThat(stubXatkitCore.getXatkitSession(SLACK_CHANNEL)).as("Null session").isNull();
     }
@@ -171,7 +176,7 @@ public class SlackIntentProviderTest extends SlackTest {
     @Test
     public void sendSlackMessageEmptyMessage() {
         slackIntentProvider = getValidSlackInputProvider();
-        slackIntentProvider.getRtmClient().onMessage(getMessageEmptyText());
+        slackIntentProvider.getRtmClient(SLACK_TEAM_ID).onMessage(getMessageEmptyText());
         assertThat(stubXatkitCore.getHandledEvents()).as("Empty handled events").isEmpty();
         assertThat(stubXatkitCore.getXatkitSession(SLACK_CHANNEL)).as("Null session").isNull();
     }
@@ -188,24 +193,24 @@ public class SlackIntentProviderTest extends SlackTest {
     }
 
     private String getValidMessage() {
-        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello\", \"channel\":\"{0}\", " +
-                "\"user\":\"UBD4Z7SKH\"'}'", SLACK_CHANNEL);
+        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello\", \"team\":\"{0}\", " +
+                "\"channel\":\"{1}\", \"user\":\"UBD4Z7SKH\"'}'", SLACK_TEAM_ID, SLACK_CHANNEL);
     }
 
     private String getValidMessageMention() {
-        String botMention = "<@" + slackIntentProvider.getSelfId() + ">";
-        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello {0}\", \"channel\":\"{1}\", " +
-                "\"user\":\"UBD4Z7SKH\"'}'", botMention, SLACK_CHANNEL);
+        String botMention = "<@" + slackIntentProvider.getSelfId(SLACK_TEAM_ID) + ">";
+        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello {0}\", \"team\":\"{1}\", " +
+                "\"channel\":\"{2}\", \"user\":\"UBD4Z7SKH\"'}'", botMention, SLACK_TEAM_ID, SLACK_CHANNEL);
     }
 
     private String getMessageInvalidType() {
-        return MessageFormat.format("'{'\"type\":\"invalid\",\"text\":\"hello\", \"channel\":\"{0}\", " +
-                "\"user\":\"123\"'}'", SLACK_CHANNEL);
+        return MessageFormat.format("'{'\"type\":\"invalid\",\"text\":\"hello\", \"team\":\"{0}\", " +
+                "\"channel\":\"{1}\", \"user\":\"123\"'}'", SLACK_TEAM_ID, SLACK_CHANNEL);
     }
 
     private String getMessageNullText() {
-        return MessageFormat.format("'{'\"type\":\"message\", \"channel\":\"{0}\", \"user\":\"123\"'}'",
-                SLACK_CHANNEL);
+        return MessageFormat.format("'{'\"type\":\"message\",  \"team\":\"{0}\", \"channel\":\"{1}\", " +
+                "\"user\":\"123\"'}'", SLACK_TEAM_ID, SLACK_CHANNEL);
     }
 
     private String getMessageNullChannel() {
@@ -217,8 +222,8 @@ public class SlackIntentProviderTest extends SlackTest {
     }
 
     private String getMessageEmptyText() {
-        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"\", \"channel\":\"{0}\", " +
-                "\"user\":\"123\"'}'", SLACK_CHANNEL);
+        return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"\",  \"team\":\"{0}\", \"channel\":\"{1}\", " +
+                "\"user\":\"123\"'}'", SLACK_TEAM_ID, SLACK_CHANNEL);
     }
 
 }
