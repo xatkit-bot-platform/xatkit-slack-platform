@@ -1,12 +1,5 @@
 package com.xatkit.plugins.slack.platform.action;
 
-import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
-import static java.util.Objects.nonNull;
-
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.List;
-
 import com.github.seratch.jslack.api.methods.SlackApiException;
 import com.github.seratch.jslack.api.methods.request.chat.ChatPostMessageRequest;
 import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageResponse;
@@ -16,8 +9,14 @@ import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
-
 import fr.inria.atlanmod.commons.log.Log;
+
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.List;
+
+import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
+import static java.util.Objects.nonNull;
 
 /**
  * A {@link RuntimeAction} that posts the {@code layoutBlocks} list to a given Slack {@code channel}.
@@ -29,7 +28,12 @@ import fr.inria.atlanmod.commons.log.Log;
  * API token in order to authenticate the bot and post messages.
  */
 public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform> {
-    
+
+    /**
+     * The unique identifier of the Slack workspace containing the channel to post the message to.
+     */
+    protected String teamId;
+
     /**
      * The Slack channel to post the layout blocks to.
      */
@@ -48,12 +52,18 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
      * @param session         the {@link XatkitSession} associated to this action
      * @param layoutBlocks    the {@link LayoutBlock} list to post
      * @param channel         the Slack channel to post the layout blocks to
+     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
+     *                        *                        blocks to
      * @throws NullPointerException if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public PostLayoutBlocksMessage(SlackPlatform runtimePlatform, XatkitSession session, List<LayoutBlock> layoutBlocks,
-            String channel) {
+                                   String channel, String teamId) {
         super(runtimePlatform, session);
+
+        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+        this.teamId = teamId;
 
         checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel"
                 + " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
@@ -74,8 +84,8 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
     @Override
     public Object compute() throws IOException {
         ChatPostMessageRequest.ChatPostMessageRequestBuilder builder = ChatPostMessageRequest.builder();
-        builder.token(runtimePlatform.getSlackToken())
-                .channel(this.runtimePlatform.getChannelId(channel))
+        builder.token(runtimePlatform.getSlackToken(teamId))
+                .channel(this.runtimePlatform.getChannelId(teamId, channel))
                 .blocks(layoutBlocks)
                 .unfurlLinks(true)
                 .unfurlMedia(true);
@@ -96,6 +106,6 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
 
     @Override
     protected XatkitSession getClientSession() {
-        return this.runtimePlatform.createSessionFromChannel(channel);
+        return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

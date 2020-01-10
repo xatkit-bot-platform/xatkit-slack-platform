@@ -1,11 +1,11 @@
 package com.xatkit.plugins.slack.platform.action;
 
-import java.util.List;
-
 import com.github.seratch.jslack.api.model.block.LayoutBlock;
 import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+
+import java.util.List;
 
 public class ReplyLayoutBlocksMessage extends PostLayoutBlocksMessage  {
 
@@ -19,10 +19,11 @@ public class ReplyLayoutBlocksMessage extends PostLayoutBlocksMessage  {
      * @throws NullPointerException     if the provided {@code runtimePlatform} or
      *                                  {@code session} is {@code null}
      * @see Reply#getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String)
+     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
      */
     public ReplyLayoutBlocksMessage(SlackPlatform runtimePlatform, XatkitSession session, List<LayoutBlock> layoutBlocks) {
-        super(runtimePlatform, session, layoutBlocks, Reply.getChannel(session.getRuntimeContexts()));
+        super(runtimePlatform, session, layoutBlocks, Reply.getChannel(session.getRuntimeContexts()),
+                Reply.getTeamId(session.getRuntimeContexts()));
     }
 
 }
