@@ -31,6 +31,8 @@ actions {
 	ReplyAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String, timestamp : String)
 	PostAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String, channel : String, team : String)
 	ReplyAttachmentsMessage(pretext : String, title : String, text : String, attchColor : String)
+	PostLayoutBlocksMessage(layoutBlocks : java.util.List<com.github.seratch.jslack.api.model.block.LayoutBlock>, channel : String, team : String)
+	ReplyLayoutBlocksMessage(layoutBlocks : java.util.List<com.github.seratch.jslack.api.model.block.LayoutBlock>)
 	
 	// Formatting actions
 	// These actions do not perform operations on the Slack API, but return Strings that can be displayed as messages.
