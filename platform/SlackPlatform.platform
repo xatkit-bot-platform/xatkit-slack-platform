@@ -34,6 +34,8 @@ actions {
 	PostLayoutBlocksMessage(layoutBlocks : java.util.List<com.github.seratch.jslack.api.model.block.LayoutBlock>, channel : String, team : String)
 	ReplyLayoutBlocksMessage(layoutBlocks : java.util.List<com.github.seratch.jslack.api.model.block.LayoutBlock>)
 	
+	IsOnline(username : String, team : String) : Boolean
+	
 	// Formatting actions
 	// These actions do not perform operations on the Slack API, but return Strings that can be displayed as messages.
 	ItemizeList(list : java.util.List<?>)

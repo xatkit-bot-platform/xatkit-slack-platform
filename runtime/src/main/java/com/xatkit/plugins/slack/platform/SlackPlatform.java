@@ -6,12 +6,15 @@ import com.github.seratch.jslack.api.methods.request.auth.AuthTestRequest;
 import com.github.seratch.jslack.api.methods.request.conversations.ConversationsListRequest;
 import com.github.seratch.jslack.api.methods.request.oauth.OAuthAccessRequest;
 import com.github.seratch.jslack.api.methods.request.users.UsersInfoRequest;
+import com.github.seratch.jslack.api.methods.request.users.UsersListRequest;
 import com.github.seratch.jslack.api.methods.response.auth.AuthTestResponse;
 import com.github.seratch.jslack.api.methods.response.conversations.ConversationsListResponse;
 import com.github.seratch.jslack.api.methods.response.oauth.OAuthAccessResponse;
 import com.github.seratch.jslack.api.methods.response.users.UsersInfoResponse;
+import com.github.seratch.jslack.api.methods.response.users.UsersListResponse;
 import com.github.seratch.jslack.api.model.Conversation;
 import com.github.seratch.jslack.api.model.ConversationType;
+import com.github.seratch.jslack.api.model.User;
 import com.google.gson.JsonObject;
 import com.xatkit.core.XatkitCore;
 import com.xatkit.core.XatkitException;
@@ -39,6 +42,7 @@ import java.util.Map;
 
 import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
+import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -307,6 +311,39 @@ public class SlackPlatform extends ChatPlatform {
      */
     public XatkitSession createSessionFromChannel(String teamId, String channel) {
         return this.xatkitCore.getOrCreateXatkitSession(teamId + "@" + this.getChannelId(teamId, channel));
+    }
+
+    /**
+     * Retrieves the User ID associated to the provided {@code username} from the workspace identified with {@code
+     * teamId}.
+     * <p>
+     * This method looks for any user with a {@code id}, {@code name}, or {@code realName} matching the provided {@code
+     * username}, and returns its identifier.
+     *
+     * @param teamId   the idetnfier of the workspace containing the user to retrieve the ID of
+     * @param username the name of the user to retrieve the ID of
+     * @return the User ID if it exists
+     * @throws XatkitException      if an error occurred when accessing the Slack API
+     * @throws NullPointerException if the provided {@code teamId} or {@code username} is {@code null}
+     */
+    public String getUserId(String teamId, String username) {
+        checkNotNull(teamId, "Cannot retrieve the user ID from the provided team %s", teamId);
+        checkNotNull(username, "Cannot retrieve the user ID from the provided username %s", username);
+        UsersListResponse usersListResponse;
+        try {
+            usersListResponse = this.getSlack().methods().usersList(UsersListRequest.builder()
+                    .token(getSlackToken(teamId))
+                    .build());
+        } catch (IOException | SlackApiException e) {
+            throw new XatkitException("An error occurred when accessing the Slack API, see attached exception", e);
+        }
+        logSlackApiResponse(usersListResponse);
+        for (User user : usersListResponse.getMembers()) {
+            if (user.getId().equals(username) || user.getName().equals(username) || user.getRealName().equals(username)) {
+                return user.getId();
+            }
+        }
+        return null;
     }
 
     /**
