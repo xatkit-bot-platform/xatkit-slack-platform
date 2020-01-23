@@ -33,7 +33,7 @@ public class SlackUtils {
                 Log.error("Missing OAuth scope: provided [{0}], required [{1}]", response.getProvided(),
                         response.getNeeded());
             } else {
-                Log.error("The Slack API returns the following error: {0}" + response.getError());
+                Log.error("The Slack API returns the following error: {0}", response.getError());
             }
         }
     }
