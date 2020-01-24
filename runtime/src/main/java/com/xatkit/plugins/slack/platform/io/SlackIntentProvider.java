@@ -196,7 +196,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                 if (isNull(username) || username.isEmpty()) {
                     username = profile.getRealName();
                 }
-                Log.info("Found username \"{0}\"", username);
+                Log.debug("Found username \"{0}\"", username);
             } else {
                 Log.error("Cannot retrieve the username for {0}, returning the default username {1}", userId,
                         DEFAULT_USERNAME);
@@ -247,7 +247,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * @throws IOException       if an error occurred when reaching the Slack API
      */
     private User getUserFromUserId(String teamId, String userId) throws SlackApiException, IOException {
-        Log.info("Retrieving User for the user ID {0}", userId);
+        Log.debug("Retrieving User for the user ID {0}", userId);
         UsersInfoRequest usersInfoRequest = UsersInfoRequest.builder()
                 .token(this.runtimePlatform.getSlackToken(teamId))
                 .user(userId)
@@ -330,7 +330,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                 /*
                  * The message has a type, this should always be true
                  */
-                Log.info("received {0}", json);
+                Log.debug("received {0}", json);
                 if (json.get("type").getAsString().equals(SlackUtils.HELLO_TYPE)) {
                     Log.info("Slack listener connected");
                 }
@@ -358,7 +358,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                     if (nonNull(textObject)) {
                                         String text = textObject.getAsString();
                                         if (!text.isEmpty()) {
-                                            Log.info("Received message {0} from user {1} (channel: {2})", text,
+                                            Log.debug("Received message {0} from user {1} (channel: {2})", text,
                                                     user, channel);
 
                                             if (listenMentionsOnGroupChannels && SlackIntentProvider.this.runtimePlatform.isGroupChannel(team, channel)) {

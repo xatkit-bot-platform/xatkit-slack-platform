@@ -236,7 +236,7 @@ public class SlackPlatform extends ChatPlatform {
                             result.addProperty("Error", "The Slack API response does not contain a bot access token");
                             return result;
                         }
-                        Log.info("Adding mapping {0} -> {1}", teamId, botAccessToken);
+                        Log.info("Adding installation mapping {0} -> {1}", teamId, botAccessToken);
                         this.teamIdToSlackToken.put(teamId, botAccessToken);
                         loadChannels(teamId);
                         this.notifyNewInstallation(teamId, botAccessToken);
