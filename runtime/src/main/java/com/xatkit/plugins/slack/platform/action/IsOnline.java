@@ -7,11 +7,13 @@ import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+import fr.inria.atlanmod.commons.log.Log;
 
 import java.io.IOException;
 
 import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
+import static java.util.Objects.isNull;
 
 /**
  * Returns whether a given user in a given team is online.
@@ -65,7 +67,10 @@ public class IsOnline extends RuntimeAction<SlackPlatform> {
     protected Object compute() {
 
         String userId = this.runtimePlatform.getUserId(teamId, username);
-
+        if (isNull(userId)) {
+            Log.warn("Cannot find the user {0} in the team {1}, returning isOnline=false", username, teamId);
+            return false;
+        }
         UsersGetPresenceRequest request = UsersGetPresenceRequest.builder()
                 .token(this.runtimePlatform.getSlackToken(teamId))
                 .user(userId)

@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
@@ -339,7 +340,7 @@ public class SlackPlatform extends ChatPlatform {
         }
         logSlackApiResponse(usersListResponse);
         for (User user : usersListResponse.getMembers()) {
-            if (user.getId().equals(username) || user.getName().equals(username) || user.getRealName().equals(username)) {
+            if (Objects.equals(user.getId(), username) || Objects.equals(user.getName(), username) || Objects.equals(user.getRealName(), username)) {
                 return user.getId();
             }
         }
