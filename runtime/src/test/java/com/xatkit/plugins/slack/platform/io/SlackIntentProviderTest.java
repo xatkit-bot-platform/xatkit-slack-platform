@@ -2,7 +2,6 @@ package com.xatkit.plugins.slack.platform.io;
 
 import com.xatkit.AbstractEventProviderTest;
 import com.xatkit.core.ExecutionService;
-import com.xatkit.core.recognition.IntentRecognitionProvider;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.intent.EventInstance;
 import com.xatkit.intent.IntentDefinition;
@@ -53,8 +52,6 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
 
     private ExecutionService mockedExecutionService;
 
-    private IntentRecognitionProvider mockedIntentRecognitionProvider;
-
     @Before
     public void setUp() {
         super.setUp();
@@ -95,6 +92,10 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
 
     @Test
     public void sendValidSlackMessage() {
+        /*
+         * Configure the mock to return a valid IntentDefinition.
+         */
+        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(XatkitSession.class))).thenReturn(VALID_RECOGNIZED_INTENT);
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getValidMessage());
         ArgumentCaptor<EventInstance> eventCaptor = ArgumentCaptor.forClass(EventInstance.class);
@@ -119,15 +120,20 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
 
     @Test
     public void sendMentionGroupChannelListenToMentionProperty() {
+        /*
+         * Configure the mock to return a valid IntentDefinition.
+         */
+        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(XatkitSession.class))).thenReturn(VALID_RECOGNIZED_INTENT);
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
         provider = new SlackIntentProvider(platform, configuration);
         provider.getRtmClient(slackTeamId).onMessage(getValidMessageMention());
         ArgumentCaptor<XatkitSession> sessionCaptor = ArgumentCaptor.forClass(XatkitSession.class);
         verify(mockedExecutionService, times(1)).handleEventInstance(any(EventInstance.class), sessionCaptor.capture());
-        XatkitSession session = sessionCaptor.capture();
+        XatkitSession session = sessionCaptor.getValue();
         String rawMessage = (String) session.getRuntimeContexts().getContextValue(SlackUtils.SLACK_CONTEXT_KEY,
                 SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY);
+        assertThat(rawMessage).as("Message not empty").isNotEmpty();
         assertThat(rawMessage).as("Filtered mention").doesNotContain("<@" + provider.getSelfId(slackTeamId) + ">");
     }
 
@@ -205,7 +211,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     }
 
     private String getValidMessageMention() {
-        String botMention = "<@" + provider.getSelfId(slackTeamId) + ">";
+        String botMention = "<@" + provider.getSelfId(platform.getSlackToken(slackTeamId)) + ">";
         return MessageFormat.format("'{'\"type\":\"message\",\"text\":\"hello {0}\", \"team\":\"{1}\", " +
                 "\"channel\":\"{2}\", \"user\":\"UBD4Z7SKH\"'}'", botMention, slackTeamId, slackChannel);
     }
