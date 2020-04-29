@@ -2,6 +2,7 @@ package com.xatkit.plugins.slack.platform.io;
 
 import com.xatkit.AbstractEventProviderTest;
 import com.xatkit.core.ExecutionService;
+import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.intent.EventInstance;
 import com.xatkit.intent.IntentDefinition;
@@ -91,7 +92,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     }
 
     @Test
-    public void sendValidSlackMessage() {
+    public void sendValidSlackMessage() throws IntentRecognitionProviderException {
         /*
          * Configure the mock to return a valid IntentDefinition.
          */
@@ -119,7 +120,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     }
 
     @Test
-    public void sendMentionGroupChannelListenToMentionProperty() {
+    public void sendMentionGroupChannelListenToMentionProperty() throws IntentRecognitionProviderException {
         /*
          * Configure the mock to return a valid IntentDefinition.
          */

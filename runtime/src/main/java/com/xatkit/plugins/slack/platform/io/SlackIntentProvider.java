@@ -15,6 +15,7 @@ import com.google.gson.JsonParser;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.io.IntentRecognitionHelper;
 import com.xatkit.core.platform.io.RuntimeEventProvider;
+import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.intent.RecognizedIntent;
 import com.xatkit.plugins.chat.ChatUtils;
@@ -27,6 +28,7 @@ import org.apache.commons.configuration2.Configuration;
 import javax.websocket.CloseReason;
 import javax.websocket.DeploymentException;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -403,9 +405,15 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                              * Call getRecognizedIntent before setting any context variable, the
                                              * recognition triggers a decrement of all the context variables.
                                              */
-                                            RecognizedIntent recognizedIntent =
-                                                    IntentRecognitionHelper.getRecognizedIntent(text, session,
-                                                            SlackIntentProvider.this.xatkitCore);
+                                            RecognizedIntent recognizedIntent;
+                                            try {
+                                                recognizedIntent =
+                                                        IntentRecognitionHelper.getRecognizedIntent(text, session,
+                                                                SlackIntentProvider.this.xatkitCore);
+                                            } catch(IntentRecognitionProviderException e) {
+                                                throw new RuntimeException("An internal error occurred when computing" +
+                                                        " the intent, see attached exception", e);
+                                            }
                                             /*
                                              * The slack-related values are stored in the local context with a
                                              * lifespan count of 1: they are reset every time a message is
