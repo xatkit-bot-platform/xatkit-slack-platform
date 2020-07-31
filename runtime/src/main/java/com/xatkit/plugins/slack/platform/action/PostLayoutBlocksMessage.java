@@ -8,8 +8,10 @@ import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
+import lombok.NonNull;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -48,24 +50,22 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
      * Constructs a new {@link PostLayoutBlocksMessage} with the provided {@code runtimePlatform}, {@code session},
      * {@code layoutBlocks} and {@code channel}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param layoutBlocks    the {@link LayoutBlock} list to post
-     * @param channel         the Slack channel to post the layout blocks to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
-     *                        *                        blocks to
-     * @throws NullPointerException if the provided {@code runtimePlatform} or {@code session} is {@code null}
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @param platform     the {@link SlackPlatform} containing this action
+     * @param context      the {@link StateContext} associated to this action
+     * @param layoutBlocks the {@link LayoutBlock} list to post
+     * @param channel      the Slack channel to post the layout blocks to
+     * @param teamId       the unique identifier of the Slack workspace containing the channel to post the
+     *                     *                        blocks to
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public PostLayoutBlocksMessage(SlackPlatform runtimePlatform, XatkitSession session, List<LayoutBlock> layoutBlocks,
-                                   String channel, String teamId) {
-        super(runtimePlatform, session);
-
-        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+    public PostLayoutBlocksMessage(@NonNull SlackPlatform platform, @NonNull StateContext context,
+                                   @NonNull List<LayoutBlock> layoutBlocks, @NonNull String channel,
+                                   @NonNull String teamId) {
+        super(platform, context);
+        checkArgument(!teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
                 "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
         this.teamId = teamId;
-
-        checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel"
+        checkArgument(!channel.isEmpty(), "Cannot construct a %s action with the provided channel"
                 + " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
         this.channel = channel;
         this.layoutBlocks = layoutBlocks;

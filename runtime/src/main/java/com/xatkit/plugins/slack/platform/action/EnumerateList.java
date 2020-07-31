@@ -1,9 +1,12 @@
 package com.xatkit.plugins.slack.platform.action;
 
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.chat.platform.action.FormatList;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+import lombok.NonNull;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -22,18 +25,19 @@ public class EnumerateList extends FormatList<SlackPlatform> {
     /**
      * Constructs an {@link EnumerateList} with the provided {@code runtimePlatform}, {@code session}, and {@code list}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param list            the {@link List} to format as a set of items
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link StateContext} associated to this action
+     * @param list     the {@link List} to format as a set of items
      * @throws NullPointerException if the provided {@code runtimePlatform}, {@code session}, or {@code list} is
      *                              {@code null}
      */
-    public EnumerateList(SlackPlatform runtimePlatform, XatkitSession session, List<?> list) {
-        super(runtimePlatform, session, list, null);
+    public EnumerateList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list) {
+        super(platform, context, list, null);
     }
 
-    public EnumerateList(SlackPlatform runtimePlatform, XatkitSession session, List<?> list, String formatterName) {
-        super(runtimePlatform, session, list, formatterName);
+    public EnumerateList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list,
+                         @Nullable String formatterName) {
+        super(platform, context, list, formatterName);
     }
 
     /**

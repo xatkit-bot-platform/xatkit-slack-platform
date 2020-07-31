@@ -16,6 +16,7 @@
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <tyrus.version>1.13</tyrus.version>
         <log4j.version>2.9.1</log4j.version>
+        <lombok.version>1.18.12</lombok.version>
         <junit.version>4.12</junit.version>
         <assertj.version>3.10.0</assertj.version>
         <mockito-version>3.3.3</mockito-version>
@@ -40,6 +41,13 @@
         <dependency>
             <groupId>org.glassfish.tyrus.bundles</groupId>
             <artifactId>tyrus-standalone-client</artifactId>
+        </dependency>
+
+        <!-- Utils -->
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
 
         <!-- Xatkit Internal -->
@@ -106,6 +114,15 @@
                 <groupId>org.glassfish.tyrus.bundles</groupId>
                 <artifactId>tyrus-standalone-client</artifactId>
                 <version>${tyrus.version}</version>
+            </dependency>
+
+            <!-- Utils -->
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Tests -->

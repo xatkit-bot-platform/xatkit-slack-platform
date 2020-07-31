@@ -6,8 +6,10 @@ import com.github.seratch.jslack.api.methods.response.users.UsersGetPresenceResp
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
+import lombok.NonNull;
 
 import java.io.IOException;
 
@@ -42,17 +44,14 @@ public class IsOnline extends RuntimeAction<SlackPlatform> {
      * Constructs an {@link IsOnline} with the provided {@code runtimePlatform}, {@code session}, {@code username},
      * and {@code teamId}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param username        the name of the user to check
-     * @param teamId          the unique identifier of the Slack workspace containing the user to check.
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link XatkitSession} associated to this action
+     * @param username the name of the user to check
+     * @param teamId   the unique identifier of the Slack workspace containing the user to check.
      */
-    public IsOnline(SlackPlatform runtimePlatform, XatkitSession session, String username, String teamId) {
-        super(runtimePlatform, session);
-        checkNotNull(username, "Cannot build a %s action with the provided user %s", this.getClass().getSimpleName(),
-                username);
-        checkNotNull(teamId, "Cannot build a %s action with the provided team %s", this.getClass().getSimpleName(),
-                teamId);
+    public IsOnline(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String username,
+                    @NonNull String teamId) {
+        super(platform, context);
         this.username = username;
         this.teamId = teamId;
     }

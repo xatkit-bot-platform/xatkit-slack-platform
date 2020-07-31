@@ -3,7 +3,9 @@ package com.xatkit.plugins.slack.platform.action;
 import com.github.seratch.jslack.api.model.Attachment;
 import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+import lombok.NonNull;
 
 import java.util.List;
 
@@ -19,75 +21,74 @@ import java.util.List;
 public class ReplyAttachmentsMessage extends PostAttachmentsMessage {
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
+     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code platform}, {@code context},
      * and {@code attachments}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param attachments     the {@link Attachment} list to post
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or
-     *                                  {@code session} is {@code null}
-     * @throws IllegalArgumentException if the text parameter of each entry of the
-     *                                  provided {@code attachments} list is
-     *                                  {@code null} or empty
-     * @see Reply#getTeamId(RuntimeContexts)
-     * @see Reply#getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @param platform    the {@link SlackPlatform} containing this action
+     * @param context     the {@link StateContext} associated to this action
+     * @param attachments the {@link Attachment} list to post
+     * @throws IllegalArgumentException if the text parameter of each entry of the provided {@code attachments} list
+     *                                  is {@code null} or empty
+     * @see Reply#getTeamId(StateContext)
+     * @see Reply#getChannel(StateContext)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public ReplyAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, List<Attachment> attachments) {
-        super(runtimePlatform, session, attachments, Reply.getChannel(session.getRuntimeContexts()),
-                Reply.getTeamId(session.getRuntimeContexts()));
+    public ReplyAttachmentsMessage(@NonNull SlackPlatform platform, @NonNull StateContext context,
+                                   @NonNull List<Attachment> attachments) {
+        super(platform, context, attachments, Reply.getChannel(context), Reply.getTeamId(context));
     }
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
+     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code platform}, {@code context},
      * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, and {@code timestamp}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param pretext         the pretext of the {@link Attachment} to post
-     * @param title           the title of the {@link Attachment} to post
-     * @param text            the text of the {@link Attachment} to post
-     * @param attchColor      the color of the {@link Attachment} to post in HEX
-     *                        format
-     * @param timestamp       the timestamp of the {@link Attachment} to post in
-     *                        epoch format
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or
-     *                                  {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code text} list is
-     *                                  {@code null} or empty
-     * @see Reply#getTeamId(RuntimeContexts)
-     * @see Reply#getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @param platform   the {@link SlackPlatform} containing this action
+     * @param context    the {@link StateContext} associated to this action
+     * @param pretext    the pretext of the {@link Attachment} to post
+     * @param title      the title of the {@link Attachment} to post
+     * @param text       the text of the {@link Attachment} to post
+     * @param attchColor the color of the {@link Attachment} to post in HEX
+     *                   format
+     * @param timestamp  the timestamp of the {@link Attachment} to post in
+     *                   epoch format
+     * @throws IllegalArgumentException if the provided {@code text} is {@code null} or empty
+     * @see Reply#getTeamId(StateContext)
+     * @see Reply#getChannel(StateContext)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public ReplyAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                   String text, String attchColor, String timestamp) {
-        super(runtimePlatform, session, pretext, title, text, attchColor, timestamp,
-                Reply.getChannel(session.getRuntimeContexts()), Reply.getTeamId(session.getRuntimeContexts()));
+    public ReplyAttachmentsMessage(@NonNull SlackPlatform platform,
+                                   @NonNull StateContext context,
+                                   String pretext,
+                                   String title,
+                                   @NonNull String text,
+                                   String attchColor,
+                                   String timestamp) {
+        super(platform, context, pretext, title, text, attchColor, timestamp, Reply.getChannel(context),
+                Reply.getTeamId(context));
     }
 
     /**
-     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
-	 * {@code pretext}, {@code title}, {@code text}, and {@code attchColor}.
+     * Constructs a new {@link ReplyAttachmentsMessage} with the provided {@code platform}, {@code context},
+     * {@code pretext}, {@code title}, {@code text}, and {@code attchColor}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param pretext         the pretext of the {@link Attachment} to post
-     * @param title           the title of the {@link Attachment} to post
-     * @param text            the text of the {@link Attachment} to post
-     * @param attchColor      the color of the {@link Attachment} to post in HEX format
-     *                        be set to the actual time
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or
-     *                                  {@code session} is {@code null}
-     * @throws IllegalArgumentException if the provided {@code text} list is
-     *                                  {@code null} or empty
-     * @see Reply#getTeamId(RuntimeContexts)
-	 * @see Reply#getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @param platform   the {@link SlackPlatform} containing this action
+     * @param context    the {@link StateContext} associated to this action
+     * @param pretext    the pretext of the {@link Attachment} to post
+     * @param title      the title of the {@link Attachment} to post
+     * @param text       the text of the {@link Attachment} to post
+     * @param attchColor the color of the {@link Attachment} to post in HEX format
+     *                   be set to the actual time
+     * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty
+     * @see Reply#getTeamId(StateContext)
+     * @see Reply#getChannel(StateContext)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public ReplyAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                   String text, String attchColor) {
-        super(runtimePlatform, session, pretext, title, text, attchColor,
-                Reply.getChannel(session.getRuntimeContexts()), Reply.getTeamId(session.getRuntimeContexts()));
+    public ReplyAttachmentsMessage(@NonNull SlackPlatform platform,
+                                   @NonNull StateContext context,
+                                   String pretext,
+                                   String title,
+                                   @NonNull String text,
+                                   String attchColor) {
+        super(platform, context, pretext, title, text, attchColor, Reply.getChannel(context), Reply.getTeamId(context));
     }
 }
