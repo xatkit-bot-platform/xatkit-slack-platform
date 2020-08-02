@@ -219,7 +219,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public @NonNull String enumerateList(@NonNull StateContext context, @NonNull List<?> list) {
         EnumerateList action = new EnumerateList(this, context, list);
-        RuntimeActionResult result = this.executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -236,7 +236,7 @@ public class SlackPlatform extends ChatPlatform {
     public @NonNull String enumerateList(@NonNull StateContext context, @NonNull List<?> list,
                                          @Nullable String formatterName) {
         EnumerateList action = new EnumerateList(this, context, list, formatterName);
-        RuntimeActionResult result = this.executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -252,7 +252,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public boolean isOnline(@NonNull StateContext context, @NonNull String username, @NonNull String teamId) {
         IsOnline action = new IsOnline(this, context, username, teamId);
-        RuntimeActionResult result = this.executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (Boolean) result.getResult();
     }
 
@@ -267,7 +267,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list) {
         ItemizeList action = new ItemizeList(this, context, list);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -284,7 +284,7 @@ public class SlackPlatform extends ChatPlatform {
     public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list,
                                        @Nullable String formatterName) {
         ItemizeList action = new ItemizeList(this, context, list, formatterName);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -299,7 +299,7 @@ public class SlackPlatform extends ChatPlatform {
     public void postAttachmentsMessage(@NonNull StateContext context, @NonNull List<Attachment> attachments,
                                        @NonNull String channel, @NonNull String teamId) {
         PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, attachments, channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -324,7 +324,7 @@ public class SlackPlatform extends ChatPlatform {
                                        @NonNull String teamId) {
         PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, pretext, title, text, attachColor,
                 timestamp, channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -342,7 +342,7 @@ public class SlackPlatform extends ChatPlatform {
                                        String attachColor, String channel, String teamId) {
         PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, pretext, title, text, attachColor,
                 channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -356,7 +356,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public void postFileMessage(StateContext context, String message, File file, String channel, String teamId) {
         PostFileMessage action = new PostFileMessage(this, context, message, file, channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -372,7 +372,7 @@ public class SlackPlatform extends ChatPlatform {
     public void postFileMessage(StateContext context, String title, String message, String content, String channel,
                                 String teamId) {
         PostFileMessage action = new PostFileMessage(this, context, title, message, content, channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -387,7 +387,7 @@ public class SlackPlatform extends ChatPlatform {
                                         String teamId) {
         PostLayoutBlocksMessage action = new PostLayoutBlocksMessage(this, context, layoutBlocks,
                 channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -402,7 +402,7 @@ public class SlackPlatform extends ChatPlatform {
     public @NonNull String postMessage(@NonNull StateContext context, @NonNull String message, @NonNull String channel,
                                        @NonNull String teamId) {
         PostMessage action = new PostMessage(this, context, message, channel, teamId);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -424,7 +424,7 @@ public class SlackPlatform extends ChatPlatform {
     public @NonNull String postMessage(@NonNull StateContext context, @NonNull String message, @NonNull String channel,
                                        @NonNull String teamId, @Nullable String threadTs) {
         PostMessage action = new PostMessage(this, context, message, channel, teamId, threadTs);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -439,7 +439,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public @NonNull String reply(@NonNull StateContext context, @NonNull String message) {
         Reply action = new Reply(this, context, message);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
 
@@ -453,7 +453,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public void replyAttachmentsMessage(@NonNull StateContext context, @NonNull List<Attachment> attachments) {
         ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, attachments);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -473,7 +473,7 @@ public class SlackPlatform extends ChatPlatform {
                                         String attachColor, String timestamp) {
         ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, pretext, title, text, attachColor
                 , timestamp);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -491,7 +491,7 @@ public class SlackPlatform extends ChatPlatform {
                                         @NonNull String text,
                                         String attachColor) {
         ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, pretext, title, text, attachColor);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -505,7 +505,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public void replyFileMessage(@NonNull StateContext context, @NonNull String message, @NonNull File file) {
         ReplyFileMessage action = new ReplyFileMessage(this, context, message, file);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -518,7 +518,7 @@ public class SlackPlatform extends ChatPlatform {
      */
     public void replyLayoutBlocksMessage(@NonNull StateContext context, @NonNull List<LayoutBlock> layoutBlocks) {
         ReplyLayoutBlocksMessage action = new ReplyLayoutBlocksMessage(this, context, layoutBlocks);
-        RuntimeActionResult result = executeRuntimeAction(action);
+        RuntimeActionResult result = action.call();
     }
 
     /**
