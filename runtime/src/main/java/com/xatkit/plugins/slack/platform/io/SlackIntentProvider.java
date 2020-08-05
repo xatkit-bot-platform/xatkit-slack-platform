@@ -17,6 +17,7 @@ import com.xatkit.core.platform.io.IntentRecognitionHelper;
 import com.xatkit.core.platform.io.RuntimeEventProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.intent.RecognizedIntent;
 import com.xatkit.plugins.chat.ChatUtils;
 import com.xatkit.plugins.chat.platform.io.ChatIntentProvider;
@@ -28,7 +29,6 @@ import org.apache.commons.configuration2.Configuration;
 import javax.websocket.CloseReason;
 import javax.websocket.DeploymentException;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -402,8 +402,13 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                 messageTs = tsObject.getAsString();
                                             }
 
-                                            XatkitSession session =
+                                            StateContext context =
                                                     runtimePlatform.createSessionFromChannel(team, channel);
+                                            /*
+                                             * TODO remove this cast, this method should be able to deal with
+                                             * StateContext.
+                                             */
+                                            XatkitSession session = (XatkitSession) context;
                                             /*
                                              * Call getRecognizedIntent before setting any context variable, the
                                              * recognition triggers a decrement of all the context variables.

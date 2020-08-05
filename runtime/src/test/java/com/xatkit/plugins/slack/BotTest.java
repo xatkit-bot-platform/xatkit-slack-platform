@@ -1,7 +1,5 @@
 package com.xatkit.plugins.slack;
 
-import com.xatkit.Xatkit;
-
 /**
  * This class is used to run existing bots, and should not contain test cases.
  */

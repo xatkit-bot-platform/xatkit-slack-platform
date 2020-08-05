@@ -1,7 +1,6 @@
 package com.xatkit.plugins.slack.platform.action;
 
 import com.github.seratch.jslack.api.model.Attachment;
-import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;

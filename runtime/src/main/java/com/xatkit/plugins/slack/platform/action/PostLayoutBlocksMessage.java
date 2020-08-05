@@ -7,7 +7,6 @@ import com.github.seratch.jslack.api.model.block.LayoutBlock;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeAction;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
@@ -18,7 +17,6 @@ import java.text.MessageFormat;
 import java.util.List;
 
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
-import static java.util.Objects.nonNull;
 
 /**
  * A {@link RuntimeAction} that posts the {@code layoutBlocks} list to a given Slack {@code channel}.
@@ -105,7 +103,7 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

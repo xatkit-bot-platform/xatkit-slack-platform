@@ -188,7 +188,7 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

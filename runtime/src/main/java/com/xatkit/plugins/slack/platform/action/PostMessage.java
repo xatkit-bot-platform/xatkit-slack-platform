@@ -5,7 +5,6 @@ import com.github.seratch.jslack.api.methods.request.chat.ChatPostMessageRequest
 import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageResponse;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeMessageAction;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
@@ -125,7 +124,7 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

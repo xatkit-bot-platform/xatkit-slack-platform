@@ -14,7 +14,6 @@ import lombok.NonNull;
 import java.io.IOException;
 
 import static com.xatkit.plugins.slack.util.SlackUtils.logSlackApiResponse;
-import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
 
 /**

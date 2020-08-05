@@ -620,7 +620,7 @@ public class SlackPlatform extends ChatPlatform {
     }
 
     /**
-     * Returns the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}.
+     * Returns the {@link StateContext} associated to the provided {@code teamId} and {@code channel}.
      * <p>
      * The provided {@code teamId} <b>must</b> be a valid workspace identifier, while the provided {@code channel}
      * can be an identifier or a channel name.
@@ -629,8 +629,8 @@ public class SlackPlatform extends ChatPlatform {
      * @param channel the workspace's {@code channel} to create a session for
      * @return the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}
      */
-    public XatkitSession createSessionFromChannel(String teamId, String channel) {
-        return this.xatkitCore.getOrCreateXatkitSession(teamId + "@" + this.getChannelId(teamId, channel));
+    public StateContext createSessionFromChannel(String teamId, String channel) {
+        return this.xatkitCore.getOrCreateContext(teamId + "@" + this.getChannelId(teamId, channel));
     }
 
     /**

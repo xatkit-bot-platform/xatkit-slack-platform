@@ -6,7 +6,6 @@ import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageRespon
 import com.github.seratch.jslack.api.model.Attachment;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
@@ -220,7 +219,7 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

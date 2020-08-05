@@ -1,7 +1,6 @@
 package com.xatkit.plugins.slack.platform.io;
 
 import com.xatkit.plugins.slack.platform.SlackPlatform;
-import org.apache.commons.configuration2.Configuration;
 
 /**
  * A generic Slack user {@link com.xatkit.plugins.chat.platform.io.ChatIntentProvider}.
