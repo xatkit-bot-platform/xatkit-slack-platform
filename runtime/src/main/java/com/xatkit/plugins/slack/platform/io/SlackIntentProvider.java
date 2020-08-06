@@ -74,7 +74,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * <p>
      * Keys in this {@link Map} are {@code teamId}.
      */
-    private Map<String, RTMClient> rtmClients;
+    private Map<String, RTMClient> rtmClients = new HashMap<>();
 
     /**
      * The {@link JsonParser} used to manipulate Slack API answers.
