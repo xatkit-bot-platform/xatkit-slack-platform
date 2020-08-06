@@ -196,8 +196,9 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     protected SlackPlatform getPlatform() {
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty(SlackUtils.SLACK_TOKEN_KEY, SlackTestUtils.getSlackToken());
-        return new SlackPlatform();
-        // TODO check that
+        SlackPlatform slackPlatform = new SlackPlatform();
+        slackPlatform.start(mockedXatkitCore, configuration);
+        return slackPlatform;
     }
 
     private SlackIntentProvider getValidSlackInputProvider() {
