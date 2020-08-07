@@ -17,6 +17,7 @@ import com.xatkit.core.platform.io.IntentRecognitionHelper;
 import com.xatkit.core.platform.io.RuntimeEventProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.intent.RecognizedIntent;
 import com.xatkit.plugins.chat.ChatUtils;
 import com.xatkit.plugins.chat.platform.io.ChatIntentProvider;
@@ -28,7 +29,6 @@ import org.apache.commons.configuration2.Configuration;
 import javax.websocket.CloseReason;
 import javax.websocket.DeploymentException;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,7 +74,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * <p>
      * Keys in this {@link Map} are {@code teamId}.
      */
-    private Map<String, RTMClient> rtmClients;
+    private Map<String, RTMClient> rtmClients = new HashMap<>();
 
     /**
      * The {@link JsonParser} used to manipulate Slack API answers.
@@ -93,6 +93,10 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      */
     private boolean listenMentionsOnGroupChannels;
 
+    public SlackIntentProvider(SlackPlatform slackPlatform) {
+        super(slackPlatform);
+    }
+
     /**
      * Constructs a new {@link SlackIntentProvider} from the provided {@code runtimePlatform} and
      * {@code configuration}.
@@ -100,14 +104,13 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * This constructor initializes the underlying RTM connections and creates a message listener that forwards to
      * the {@code xatkitCore} instance not empty messages sent in channels the bot is listening to.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this {@link SlackIntentProvider}
      * @param configuration   the {@link Configuration} used to retrieve the Slack bot API token
-     * @throws NullPointerException if the provided {@code runtimePlatform} or {@code configuration} is {@code
-     *                              null}
+     * @throws NullPointerException if the provided {@code configuration} is {@code null}
      * @throws XatkitException      if an error occurred when starting the RTM clients
      */
-    public SlackIntentProvider(SlackPlatform runtimePlatform, Configuration configuration) {
-        super(runtimePlatform, configuration);
+    @Override
+    public void start(Configuration configuration) {
+        super.start(configuration);
         checkNotNull(configuration, "Cannot construct a SlackIntentProvider from a null configuration");
         this.ignoreFallbackOnGroupChannels =
                 configuration.getBoolean(SlackUtils.IGNORE_FALLBACK_ON_GROUP_CHANNELS_KEY,
@@ -399,8 +402,13 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                 messageTs = tsObject.getAsString();
                                             }
 
-                                            XatkitSession session =
+                                            StateContext context =
                                                     runtimePlatform.createSessionFromChannel(team, channel);
+                                            /*
+                                             * TODO remove this cast, this method should be able to deal with
+                                             * StateContext.
+                                             */
+                                            XatkitSession session = (XatkitSession) context;
                                             /*
                                              * Call getRecognizedIntent before setting any context variable, the
                                              * recognition triggers a decrement of all the context variables.

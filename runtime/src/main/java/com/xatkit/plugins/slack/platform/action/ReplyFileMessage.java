@@ -1,8 +1,9 @@
 package com.xatkit.plugins.slack.platform.action;
 
-import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+import lombok.NonNull;
 
 import java.io.File;
 
@@ -18,23 +19,21 @@ import java.io.File;
 public class ReplyFileMessage extends PostFileMessage {
 
     /**
-     * Constructs a new {@link ReplyFileMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
+     * Constructs a new {@link ReplyFileMessage} with the provided {@code platform}, {@code context}, {@code
      * message}, and {@code file}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param message         the message to associated to the uploaded {@link File}
-     * @param file            the {@link File} to upload
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is
-     *                                  {@code null}
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link StateContext} associated to this action
+     * @param message  the message to associated to the uploaded {@link File}
+     * @param file     the {@link File} to upload
      * @throws IllegalArgumentException if the provided {@code message} is {@code null} or empty, or if the provided
      *                                  {@code file} is {@code null} or does not exist
-     * @see Reply#getTeamId(RuntimeContexts) 
-     * @see Reply#getChannel(RuntimeContexts)
-     * @see PostFileMessage#PostFileMessage(SlackPlatform, XatkitSession, String, File, String, String)
+     * @see Reply#getTeamId(StateContext)
+     * @see Reply#getChannel(StateContext)
+     * @see PostFileMessage#PostFileMessage(SlackPlatform, StateContext, String, File, String, String)
      */
-    public ReplyFileMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, File file) {
-        super(runtimePlatform, session, message, file, Reply.getChannel(session.getRuntimeContexts()),
-                Reply.getTeamId(session.getRuntimeContexts()));
+    public ReplyFileMessage(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String message,
+                            @NonNull File file) {
+        super(platform, context, message, file, Reply.getChannel(context), Reply.getTeamId(context));
     }
 }

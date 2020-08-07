@@ -12,25 +12,42 @@ import com.github.seratch.jslack.api.methods.response.conversations.Conversation
 import com.github.seratch.jslack.api.methods.response.oauth.OAuthAccessResponse;
 import com.github.seratch.jslack.api.methods.response.users.UsersInfoResponse;
 import com.github.seratch.jslack.api.methods.response.users.UsersListResponse;
+import com.github.seratch.jslack.api.model.Attachment;
 import com.github.seratch.jslack.api.model.Conversation;
 import com.github.seratch.jslack.api.model.ConversationType;
 import com.github.seratch.jslack.api.model.User;
+import com.github.seratch.jslack.api.model.block.LayoutBlock;
 import com.google.gson.JsonObject;
 import com.xatkit.core.XatkitCore;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.RuntimePlatform;
-import com.xatkit.core.platform.action.RuntimeAction;
+import com.xatkit.core.platform.action.RuntimeActionResult;
 import com.xatkit.core.server.HttpMethod;
 import com.xatkit.core.server.HttpUtils;
 import com.xatkit.core.server.RestHandlerFactory;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.chat.platform.ChatPlatform;
 import com.xatkit.plugins.slack.SlackUtils;
+import com.xatkit.plugins.slack.platform.action.EnumerateList;
+import com.xatkit.plugins.slack.platform.action.IsOnline;
+import com.xatkit.plugins.slack.platform.action.ItemizeList;
+import com.xatkit.plugins.slack.platform.action.PostAttachmentsMessage;
+import com.xatkit.plugins.slack.platform.action.PostFileMessage;
+import com.xatkit.plugins.slack.platform.action.PostLayoutBlocksMessage;
+import com.xatkit.plugins.slack.platform.action.PostMessage;
+import com.xatkit.plugins.slack.platform.action.Reply;
+import com.xatkit.plugins.slack.platform.action.ReplyAttachmentsMessage;
+import com.xatkit.plugins.slack.platform.action.ReplyFileMessage;
+import com.xatkit.plugins.slack.platform.action.ReplyLayoutBlocksMessage;
 import com.xatkit.plugins.slack.platform.io.SlackIntentProvider;
 import fr.inria.atlanmod.commons.log.Log;
+import lombok.NonNull;
 import org.apache.commons.configuration2.Configuration;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
@@ -49,12 +66,6 @@ import static java.util.Objects.nonNull;
 
 /**
  * A {@link RuntimePlatform} class that connects and interacts with the Slack API.
- * <p>
- * This runtimePlatform manages connections to the Slack API, and provides a set of {@link RuntimeAction}s to
- * interact with the Slack API (see {@link com.xatkit.plugins.slack.platform.action}).
- * <p>
- * This class is part of xatkit's core platform, and can be used in an execution model by importing the
- * <i>SlackPlatform</i> package.
  */
 public class SlackPlatform extends ChatPlatform {
 
@@ -143,30 +154,25 @@ public class SlackPlatform extends ChatPlatform {
     private Map<String, String> teamIdToSlackToken;
 
     /**
-     * Constructs a new {@link SlackPlatform} from the provided {@link XatkitCore} and {@link Configuration}.
+     * {@inheritDoc}
      * <p>
-     * This constructor initializes the underlying {@link Slack} client. If the provided {@code configuration}
-     * contains a Slack {@code token} (using the key {@link SlackUtils#SLACK_TOKEN_KEY}) the constructor initializes
-     * the platform with the provided token, and does not allow additional installation of the Slack app. This
-     * feature is typically used in development mode to quickly test the bot under development in a single Slack
-     * workspace.
+     * This method initializes the underlying {@link Slack} client. If the provided {@code configuration} contains a
+     * Slack {@code token} (using the key {@link SlackUtils#SLACK_TOKEN_KEY} the constructor initializes the platform
+     * with the provided token, and does not allow additional installation of the Slack app. This feature is
+     * typically used in development mode to quickly test the bot under development in a single Slack workspace.
      * <p>
      * If the {@code configuration} contains a Slack {@code clientId} and {@code clientSecret} the platform starts a
      * dedicated REST handler that will receive OAuth queries when the Slack app is installed by clients. This
      * handler manages internal caches to ensure that {@code Reply*} actions are correctly sent to the appropriate
-     * workspaces.
+     * workspace.
      *
-     * @param xatkitCore    the {@link XatkitCore} instance associated to this runtimePlatform
-     * @param configuration the {@link Configuration} used to retrieve the Slack bot API token
-     * @throws NullPointerException     if the provided {@code xatkitCore} or {@code configuration} is {@code null}
-     * @throws IllegalArgumentException if the {@code configuration} neither contains a Slack {@code token} or a
-     *                                  {@code clientId} and {@code clientSecret}
      * @see SlackUtils#SLACK_TOKEN_KEY
      * @see SlackUtils#SLACK_CLIENT_ID_KEY
      * @see SlackUtils#SLACK_CLIENT_SECRET_KEY
      */
-    public SlackPlatform(XatkitCore xatkitCore, Configuration configuration) {
-        super(xatkitCore, configuration);
+    @Override
+    public void start(XatkitCore xatkitCore, Configuration configuration) {
+        super.start(xatkitCore, configuration);
         this.teamIdToSlackToken = new HashMap<>();
         slack = new Slack();
         this.channelNames = new HashMap<>();
@@ -200,6 +206,319 @@ public class SlackPlatform extends ChatPlatform {
                     SlackUtils.SLACK_CLIENT_SECRET_KEY);
             registerOAuthRestHandler();
         }
+    }
+
+    /**
+     * Formats the provided {@code list} into an enumeration.
+     * <p>
+     * This method accepts any {@link List} and relies on the {@code toString} implementation of its elements.
+     *
+     * @param context the current {@link StateContext}
+     * @param list    the {@link List} to format
+     * @return the enumeration formatted as a string
+     */
+    public @NonNull String enumerateList(@NonNull StateContext context, @NonNull List<?> list) {
+        EnumerateList action = new EnumerateList(this, context, list);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Formats the provided {@code list} into an enumeration using the provided {@code formatterName}.
+     * <p>
+     * The selected formatter is used to compute a string representation of each list element.
+     *
+     * @param context       the current {@link StateContext}
+     * @param list          the {@link List} to format
+     * @param formatterName the name of the formatter to use
+     * @return the enumeration formatted as a string
+     */
+    public @NonNull String enumerateList(@NonNull StateContext context, @NonNull List<?> list,
+                                         @Nullable String formatterName) {
+        EnumerateList action = new EnumerateList(this, context, list, formatterName);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Returns whether the given {@code username} in the provided {@code teamId} is online.
+     * <p>
+     * The provided {@code username} can be a user ID, name, or real name.
+     *
+     * @param context  the current {@link StateContext}
+     * @param username the user ID, name, or real name to check
+     * @param teamId   the identifier of the Slack workspace containing the user to check
+     * @return {@code true} if the user is online, {@code false} otherwise
+     */
+    public boolean isOnline(@NonNull StateContext context, @NonNull String username, @NonNull String teamId) {
+        IsOnline action = new IsOnline(this, context, username, teamId);
+        RuntimeActionResult result = action.call();
+        return (Boolean) result.getResult();
+    }
+
+    /**
+     * Formats the provided {@code list} into an item list.
+     * <p>
+     * This method accepts any {@link List} and relies on the {@code toString} implementation of its elements.
+     *
+     * @param context the current {@link StateContext}
+     * @param list    the {@link List} to format
+     * @return the item list formatted as a string
+     */
+    public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list) {
+        ItemizeList action = new ItemizeList(this, context, list);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Formats the provided {@code list} into an item list using the provided {@code formatterName}.
+     * <p>
+     * The selected formatter is used to compute a string representaiton of each list element.
+     *
+     * @param context       the current {@link StateContext}
+     * @param list          the {@link List} to format
+     * @param formatterName the name fo the formatter to use
+     * @return the item list formatted as a string
+     */
+    public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list,
+                                       @Nullable String formatterName) {
+        ItemizeList action = new ItemizeList(this, context, list, formatterName);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Posts the provided {@code attachments} in the given {@code channel}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param attachments the list of {@link Attachment} to post
+     * @param channel     the Slack channel to post the attachment to
+     * @param teamId      the identifier of the Slack workspace to post the attachment to
+     */
+    public void postAttachmentsMessage(@NonNull StateContext context, @NonNull List<Attachment> attachments,
+                                       @NonNull String channel, @NonNull String teamId) {
+        PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, attachments, channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Builds and posts an attachment in the given {@code channel}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param pretext     the pre-text of the attachment
+     * @param title       the title of the attachment
+     * @param text        the text of the attachment
+     * @param attachColor the color of the attachment
+     * @param timestamp   the timestamp of the attachment
+     * @param channel     the Slack channel to post the attachment to
+     * @param teamId      the identifier of the Slack workspace to post the attachment to
+     */
+    public void postAttachmentsMessage(@NonNull StateContext context,
+                                       String pretext,
+                                       String title,
+                                       @NonNull String text,
+                                       String attachColor,
+                                       String timestamp,
+                                       @NonNull String channel,
+                                       @NonNull String teamId) {
+        PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, pretext, title, text, attachColor,
+                timestamp, channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Builds and posts an attachment in the given {@code channel}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param pretext     the pre-text of the attachment
+     * @param title       the title of the attachment
+     * @param text        the text of the attachment
+     * @param attachColor the color of the attachment
+     * @param channel     the Slack channel to post the attachment to
+     * @param teamId      the identifier of the Slack workspace to post the attachment to
+     */
+    public void postAttachmentsMessage(StateContext context, String pretext, String title, String text,
+                                       String attachColor, String channel, String teamId) {
+        PostAttachmentsMessage action = new PostAttachmentsMessage(this, context, pretext, title, text, attachColor,
+                channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code file} in the given {@code channel}.
+     *
+     * @param context the current {@link StateContext}
+     * @param message the message to post with the file
+     * @param file    the {@link File} to post
+     * @param channel the Slack channel to post the file to
+     * @param teamId  the identifier of the Slack workspace to post the file to
+     */
+    public void postFileMessage(StateContext context, String message, File file, String channel, String teamId) {
+        PostFileMessage action = new PostFileMessage(this, context, message, file, channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code content} as a file in the given {@code channel}.
+     *
+     * @param context the current {@link StateContext}
+     * @param title   the title of the file to post
+     * @param message the message to post with the file
+     * @param content the content of the file
+     * @param channel the Slack channel to post the file to
+     * @param teamId  the identifier of the Slack workspace to post the file to
+     */
+    public void postFileMessage(StateContext context, String title, String message, String content, String channel,
+                                String teamId) {
+        PostFileMessage action = new PostFileMessage(this, context, title, message, content, channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code layoutBlocks} to the given {@code channel}.
+     *
+     * @param context      the current {@link StateContext}
+     * @param layoutBlocks the list of {@link LayoutBlock}s to post
+     * @param channel      the Slack channel to post the file to
+     * @param teamId       the identifier of the Slack workspace to post the layout blocks to
+     */
+    public void postLayoutBlocksMessage(StateContext context, List<LayoutBlock> layoutBlocks, String channel,
+                                        String teamId) {
+        PostLayoutBlocksMessage action = new PostLayoutBlocksMessage(this, context, layoutBlocks,
+                channel, teamId);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code message} to the given {@code channel}.
+     *
+     * @param context the current {@link StateContext}
+     * @param message the message to post
+     * @param channel the Slack channel to post the message to
+     * @param teamId  the identifier of the Slack workspace to post the message to
+     * @return the timestamp of the posted message
+     */
+    public @NonNull String postMessage(@NonNull StateContext context, @NonNull String message, @NonNull String channel,
+                                       @NonNull String teamId) {
+        PostMessage action = new PostMessage(this, context, message, channel, teamId);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Posts the provided {@code message} with the provided {@code threadTs} in the given {@code channel}.
+     * <p>
+     * If the {@code threadTs} argument is equal to another message's {@code threadTs} the message is posted as a
+     * thread reply.
+     * <p>
+     * Setting {@code threadTs} to {@code null} will post the message as a top-level message in the channel.
+     *
+     * @param context  the current {@link StateContext}
+     * @param message  the message to post
+     * @param channel  the Slack channel to post the message to
+     * @param teamId   the identifier of the Slack workspace to post the message to
+     * @param threadTs the timestamp of the parent thread message
+     * @return the timestamp of the posted message
+     */
+    public @NonNull String postMessage(@NonNull StateContext context, @NonNull String message, @NonNull String channel,
+                                       @NonNull String teamId, @Nullable String threadTs) {
+        PostMessage action = new PostMessage(this, context, message, channel, teamId, threadTs);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Posts the provided {@code message} in the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context the current {@link StateContext}
+     * @param message the message to post
+     * @return the timestamp of the posted message
+     */
+    public @NonNull String reply(@NonNull StateContext context, @NonNull String message) {
+        Reply action = new Reply(this, context, message);
+        RuntimeActionResult result = action.call();
+        return (String) result.getResult();
+    }
+
+    /**
+     * Posts the provided {@code attachments} in the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param attachments the list of {@link Attachment}s to post
+     */
+    public void replyAttachmentsMessage(@NonNull StateContext context, @NonNull List<Attachment> attachments) {
+        ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, attachments);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Builds and posts the provided attachment to the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param pretext     the pre-text of the attachment
+     * @param title       the title of the attachment
+     * @param text        the text of the attachment
+     * @param attachColor the color of the attachment
+     * @param timestamp   the timestamp of the attachment
+     */
+    public void replyAttachmentsMessage(@NonNull StateContext context, String pretext, String title,
+                                        @NonNull String text,
+                                        String attachColor, String timestamp) {
+        ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, pretext, title, text, attachColor
+                , timestamp);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Builds and posts the provided attachment to the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context     the current {@link StateContext}
+     * @param pretext     the pre-text of the attachment
+     * @param title       the title of the attachment
+     * @param text        the text of the attachment
+     * @param attachColor the color of the attachment
+     */
+    public void replyAttachmentsMessage(@NonNull StateContext context, String pretext, String title,
+                                        @NonNull String text,
+                                        String attachColor) {
+        ReplyAttachmentsMessage action = new ReplyAttachmentsMessage(this, context, pretext, title, text, attachColor);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code file} in the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context the current {@link StateContext}
+     * @param message the message to post
+     * @param file    the file to post
+     */
+    public void replyFileMessage(@NonNull StateContext context, @NonNull String message, @NonNull File file) {
+        ReplyFileMessage action = new ReplyFileMessage(this, context, message, file);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
+     * Posts the provided {@code layoutBlocks} in the current channel.
+     * <p>
+     * The current channel is extracted from the provided {@code context}.
+     *
+     * @param context      the current {@link StateContext}
+     * @param layoutBlocks the list of {@link LayoutBlock}s to post
+     */
+    public void replyLayoutBlocksMessage(@NonNull StateContext context, @NonNull List<LayoutBlock> layoutBlocks) {
+        ReplyLayoutBlocksMessage action = new ReplyLayoutBlocksMessage(this, context, layoutBlocks);
+        RuntimeActionResult result = action.call();
     }
 
     /**
@@ -301,7 +620,7 @@ public class SlackPlatform extends ChatPlatform {
     }
 
     /**
-     * Returns the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}.
+     * Returns the {@link StateContext} associated to the provided {@code teamId} and {@code channel}.
      * <p>
      * The provided {@code teamId} <b>must</b> be a valid workspace identifier, while the provided {@code channel}
      * can be an identifier or a channel name.
@@ -310,8 +629,8 @@ public class SlackPlatform extends ChatPlatform {
      * @param channel the workspace's {@code channel} to create a session for
      * @return the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}
      */
-    public XatkitSession createSessionFromChannel(String teamId, String channel) {
-        return this.xatkitCore.getOrCreateXatkitSession(teamId + "@" + this.getChannelId(teamId, channel));
+    public StateContext createSessionFromChannel(String teamId, String channel) {
+        return this.xatkitCore.getOrCreateContext(teamId + "@" + this.getChannelId(teamId, channel));
     }
 
     /**

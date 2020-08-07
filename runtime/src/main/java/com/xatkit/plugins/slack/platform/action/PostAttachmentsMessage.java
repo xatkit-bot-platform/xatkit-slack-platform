@@ -6,9 +6,10 @@ import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageRespon
 import com.github.seratch.jslack.api.model.Attachment;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
-import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
+import lombok.NonNull;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -44,32 +45,27 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
      * Constructs a {@link PostAttachmentsMessage} instance with the provided {@code runtimePlatform}, {@code session},
      * {@code attachments}, {@code channel}, and {@code teamId}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param attachments     the {@link Attachment} list to post
-     * @param channel         the Slack channel to post the attachments to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
-     *                        attachment to
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
+     * @param platform    the {@link SlackPlatform} containing this action
+     * @param context     the {@link StateContext} associated to this action
+     * @param attachments the {@link Attachment} list to post
+     * @param channel     the Slack channel to post the attachments to
+     * @param teamId      the unique identifier of the Slack workspace containing the channel to post the
+     *                    attachment to
      * @throws IllegalArgumentException if the text parameter of any entry of the provided {@code attachments} list
      *                                  is {@code null} or empty, or if the provided {@code channel} or {@code teamId
      *                                  } is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, List<Attachment> attachments,
-                                  String channel, String teamId) {
-        super(runtimePlatform, session);
-
-
-        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+    public PostAttachmentsMessage(@NonNull SlackPlatform platform, @NonNull StateContext context,
+                                  @NonNull List<Attachment> attachments,
+                                  @NonNull String channel, @NonNull String teamId) {
+        super(platform, context);
+        checkArgument(!teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
                 "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
         this.teamId = teamId;
-
-
-        checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
+        checkArgument(!channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
         this.channel = channel;
-
         for (Attachment attch : attachments) {
             checkArgument(nonNull(attch.getText()) && !attch.getText().isEmpty(), "Cannot construct a %s action with " +
                             "the provided text %s, expected a non-null and not empty String for the attachment text",
@@ -83,37 +79,40 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
      * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, {@code timestamp}, {@code channel}, and
      * {@code teamId}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param pretext         the pretext of the {@link Attachment} to post
-     * @param title           the title of the {@link Attachment} to post
-     * @param text            the text of the {@link Attachment} to post
-     * @param attchColor      the color of the {@link Attachment} to post in HEX format
-     * @param timestamp       the timestamp of the {@link Attachment} to post in epoch format
-     * @param channel         the Slack channel to post the attachments to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
-     *                        attachment to
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
+     * @param platform   the {@link SlackPlatform} containing this action
+     * @param context    the {@link StateContext} associated to this action
+     * @param pretext    the pretext of the {@link Attachment} to post
+     * @param title      the title of the {@link Attachment} to post
+     * @param text       the text of the {@link Attachment} to post
+     * @param attchColor the color of the {@link Attachment} to post in HEX format
+     * @param timestamp  the timestamp of the {@link Attachment} to post in epoch format
+     * @param channel    the Slack channel to post the attachments to
+     * @param teamId     the unique identifier of the Slack workspace containing the channel to post the
+     *                   attachment to
      * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty, or if the
      *                                  provided {@code channel} or {@code teamId} is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                  String text, String attchColor, String timestamp, String channel, String teamId) {
-        super(runtimePlatform, session);
-
-        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+    public PostAttachmentsMessage(@NonNull SlackPlatform platform,
+                                  @NonNull StateContext context,
+                                  String pretext,
+                                  String title,
+                                  @NonNull String text,
+                                  String attchColor,
+                                  String timestamp,
+                                  @NonNull String channel,
+                                  @NonNull String teamId) {
+        super(platform, context);
+        checkArgument(!teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
                 "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
         this.teamId = teamId;
 
-        checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
+        checkArgument(!channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
         this.channel = channel;
-
-        checkArgument(nonNull(text) && !text.isEmpty(), "Cannot construct a %s action with the provided text %s, " +
+        checkArgument(!text.isEmpty(), "Cannot construct a %s action with the provided text %s, " +
                         "expected a non-null and not empty String for the attachment text",
                 this.getClass().getSimpleName(), text);
-
         Attachment attachment = createAttachment(pretext, title, text, attchColor, timestamp);
         this.attachments = new ArrayList<>();
         this.attachments.add(attachment);
@@ -123,33 +122,37 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
      * Constructs a {@link PostAttachmentsMessage} with the provided {@code runtimePlatform}, {@code session},
      * {@code pretext}, {@code title}, {@code text}, {@code attchColor}, {@code channel}, and {@code teamId}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param pretext         the pretext of the {@link Attachment} to post
-     * @param title           the title of the {@link Attachment} to post
-     * @param text            the text of the {@link Attachment} to post
-     * @param attchColor      the color of the {@link Attachment} to post in HEX format
-     * @param channel         the Slack channel to post the attachment to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the
-     *                        attachment to
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
+     * @param platform   the {@link SlackPlatform} containing this action
+     * @param context    the {@link StateContext} associated to this action
+     * @param pretext    the pretext of the {@link Attachment} to post
+     * @param title      the title of the {@link Attachment} to post
+     * @param text       the text of the {@link Attachment} to post
+     * @param attchColor the color of the {@link Attachment} to post in HEX format
+     * @param channel    the Slack channel to post the attachment to
+     * @param teamId     the unique identifier of the Slack workspace containing the channel to post the
+     *                   attachment to
      * @throws IllegalArgumentException if the provided {@code text} list is {@code null} or empty, or if the
-     * provided {@code channel} or {@code teamId} is {@code null} or empty
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     *                                  provided {@code channel} or {@code teamId} is {@code null} or empty
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public PostAttachmentsMessage(SlackPlatform runtimePlatform, XatkitSession session, String pretext, String title,
-                                  String text, String attchColor, String channel, String teamId) {
-        super(runtimePlatform, session);
-
-        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
+    public PostAttachmentsMessage(@NonNull SlackPlatform platform,
+                                  @NonNull StateContext context,
+                                  String pretext,
+                                  String title,
+                                  @NonNull String text,
+                                  String attchColor,
+                                  @NonNull String channel,
+                                  @NonNull String teamId) {
+        super(platform, context);
+        checkArgument(!teamId.isEmpty(), "Cannot construct a %s action with the provided team %s, " +
                 "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
         this.teamId = teamId;
 
-        checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
+        checkArgument(!channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
         this.channel = channel;
 
-        checkArgument(nonNull(text) && !text.isEmpty(), "Cannot construct a %s action with the provided text %s, " +
+        checkArgument(!text.isEmpty(), "Cannot construct a %s action with the provided text %s, " +
                         "expected a non-null and not empty String for the attachment text",
                 this.getClass().getSimpleName(), text);
 
@@ -216,7 +219,7 @@ public class PostAttachmentsMessage extends RuntimeArtifactAction<SlackPlatform>
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

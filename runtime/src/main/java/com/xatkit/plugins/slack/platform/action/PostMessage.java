@@ -5,9 +5,10 @@ import com.github.seratch.jslack.api.methods.request.chat.ChatPostMessageRequest
 import com.github.seratch.jslack.api.methods.response.chat.ChatPostMessageResponse;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeMessageAction;
-import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
+import lombok.NonNull;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -41,43 +42,40 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
      * Constructs a {@link PostMessage} instance with the provided {@code runtimePlatform}, {@code session}, {@code
      * message}, {@code channel}, and {@code teamId}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param message         the message to post
-     * @param channel         the Slack channel to post the message to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link StateContext} associated to this action
+     * @param message  the message to post
+     * @param channel  the Slack channel to post the message to
+     * @param teamId   the unique identifier of the Slack workspace containing the channel to post the message to
      * @throws IllegalArgumentException if the provided {@code message}, {@code channel}, or {@code teamId} is {@code
      *                                  null} or empty.
      */
-    public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel,
-                       String teamId) {
-        this(runtimePlatform, session, message, channel, teamId, null);
+    public PostMessage(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String message,
+                       @NonNull String channel, @NonNull String teamId) {
+        this(platform, context, message, channel, teamId, null);
     }
 
     /**
      * Constructs a new {@link PostMessage} with the provided {@code runtimePlatform}, {@code session}, {@code
      * message}, {@code channel}, {@code teamId}, and {@code threadTs}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
-     * @param message         the message to post
-     * @param channel         the Slack channel to post the message to
-     * @param teamId          the unique identifier of the Slack workspace containing the channel to post the message to
-     * @param threadTs        the timestamp of the thread to post the message to
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link StateContext} associated to this action
+     * @param message  the message to post
+     * @param channel  the Slack channel to post the message to
+     * @param teamId   the unique identifier of the Slack workspace containing the channel to post the message to
+     * @param threadTs the timestamp of the thread to post the message to
      * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
      * @throws IllegalArgumentException if the provided {@code message}, {@code channel}, or {@code teamId} is {@code
      *                                  null} or empty.
      */
-    public PostMessage(SlackPlatform runtimePlatform, XatkitSession session, String message, String channel,
-                       String teamId, @Nullable String threadTs) {
-        super(runtimePlatform, session, message);
-
-        checkArgument(nonNull(teamId) && !teamId.isEmpty(), "Cannot construct a %s action with the provided teamId " +
-                "%s, " +
-                "expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
+    public PostMessage(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String message,
+                       @NonNull String channel, @NonNull String teamId, @Nullable String threadTs) {
+        super(platform, context, message);
+        checkArgument(!teamId.isEmpty(), "Cannot construct a %s action with the provided teamId " +
+                "%s, expected a non-null and not empty String", this.getClass().getSimpleName(), teamId);
         this.teamId = teamId;
-        checkArgument(nonNull(channel) && !channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
+        checkArgument(!channel.isEmpty(), "Cannot construct a %s action with the provided channel" +
                 " %s, expected a non-null and not empty String", this.getClass().getSimpleName(), channel);
         this.channel = channel;
         /*
@@ -126,7 +124,7 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
     }
 
     @Override
-    protected XatkitSession getClientSession() {
+    protected StateContext getClientSession() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

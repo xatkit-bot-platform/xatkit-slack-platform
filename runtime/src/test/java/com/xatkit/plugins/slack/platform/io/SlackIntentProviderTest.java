@@ -59,7 +59,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         session = new XatkitSession("TEST");
         mockedExecutionService = mock(ExecutionService.class);
         when(mockedXatkitCore.getExecutionService()).thenReturn(mockedExecutionService);
-        when(mockedXatkitCore.getOrCreateXatkitSession(any(String.class))).thenReturn(session);
+        when(mockedXatkitCore.getOrCreateContext(any(String.class))).thenReturn(session);
         slackTeamId = platform.getTeamIdToSlackTokenMap().entrySet().stream()
                 .filter((entry) -> entry.getValue().equals(SlackTestUtils.getSlackToken()))
                 .findAny().get().getKey();
@@ -75,19 +75,21 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     }
 
     @Test(expected = NullPointerException.class)
-    public void constructNullXatkitCore() {
-        provider = new SlackIntentProvider(null, new BaseConfiguration());
+    public void constructNullPlatform() {
+        provider = new SlackIntentProvider(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void constructNullConfiguration() {
-        provider = new SlackIntentProvider(platform, null);
+    public void startNullConfiguration() {
+        provider = new SlackIntentProvider(platform);
+        provider.start(null);
     }
 
     @Test
-    public void constructValidConfiguration() {
+    public void startValidConfiguration() {
         Configuration configuration = getValidSlackIntentProviderConfiguration();
-        provider = new SlackIntentProvider(platform, configuration);
+        provider = new SlackIntentProvider(platform);
+        provider.start(configuration);
         assertThat(provider.getRtmClient(slackTeamId)).as("Not null RTM client").isNotNull();
     }
 
@@ -104,7 +106,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         verify(mockedExecutionService, times(1)).handleEventInstance(eventCaptor.capture(), sessionCaptor.capture());
         assertThat(eventCaptor.getValue().getDefinition().getName()).isEqualTo(VALID_EVENT_DEFINITION.getName());
 
-        verify(mockedXatkitCore, times(1)).getOrCreateXatkitSession(eq(slackTeamId + "@" + slackChannel));
+        verify(mockedXatkitCore, times(1)).getOrCreateContext(eq(slackTeamId + "@" + slackChannel));
         Map<String, Object> slackContext =
                 session.getRuntimeContexts().getContextVariables(SlackUtils.SLACK_CONTEXT_KEY);
         assertThat(slackContext).as("Not null slack context").isNotNull();
@@ -127,7 +129,8 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(XatkitSession.class))).thenReturn(VALID_RECOGNIZED_INTENT);
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
-        provider = new SlackIntentProvider(platform, configuration);
+        provider = new SlackIntentProvider(platform);
+        provider.start(configuration);
         provider.getRtmClient(slackTeamId).onMessage(getValidMessageMention());
         ArgumentCaptor<XatkitSession> sessionCaptor = ArgumentCaptor.forClass(XatkitSession.class);
         verify(mockedExecutionService, times(1)).handleEventInstance(any(EventInstance.class), sessionCaptor.capture());
@@ -142,7 +145,8 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     public void sendNoMentionGroupChannelListenToMentionProperty() {
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
-        provider = new SlackIntentProvider(platform, configuration);
+        provider = new SlackIntentProvider(platform);
+        provider.start(configuration);
         provider.getRtmClient(slackTeamId).onMessage(getValidMessage());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
                 any(XatkitSession.class));
@@ -192,12 +196,16 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
     protected SlackPlatform getPlatform() {
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty(SlackUtils.SLACK_TOKEN_KEY, SlackTestUtils.getSlackToken());
-        return new SlackPlatform(mockedXatkitCore, configuration);
+        SlackPlatform slackPlatform = new SlackPlatform();
+        slackPlatform.start(mockedXatkitCore, configuration);
+        return slackPlatform;
     }
 
     private SlackIntentProvider getValidSlackInputProvider() {
         Configuration configuration = getValidSlackIntentProviderConfiguration();
-        return new SlackIntentProvider(platform, configuration);
+        SlackIntentProvider provider = new SlackIntentProvider(platform);
+        provider.start(configuration);
+        return provider;
     }
 
     private Configuration getValidSlackIntentProviderConfiguration() {

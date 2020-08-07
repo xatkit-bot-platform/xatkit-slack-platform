@@ -2,10 +2,13 @@ package com.xatkit.plugins.slack.platform.action;
 
 import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.SlackUtils;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
+import lombok.NonNull;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 
 import static fr.inria.atlanmod.commons.Preconditions.checkArgument;
 import static fr.inria.atlanmod.commons.Preconditions.checkNotNull;
@@ -35,11 +38,11 @@ public class Reply extends PostMessage {
      * @throws IllegalArgumentException if the retrieved channel is not a {@link String}
      * @see SlackUtils
      */
-    public static String getChannel(RuntimeContexts context) {
+    public static String getChannel(StateContext context) {
         checkNotNull(context, "Cannot retrieve the channel from the provided %s %s", RuntimeContexts.class
                 .getSimpleName(), context);
-        Object channelValue = context.getContextValue(SlackUtils.SLACK_CONTEXT_KEY, SlackUtils
-                .CHAT_CHANNEL_CONTEXT_KEY);
+        Object channelValue =
+                context.getNlpContext().getOrDefault(SlackUtils.SLACK_CONTEXT_KEY, Collections.emptyMap()).get(SlackUtils.CHAT_CHANNEL_CONTEXT_KEY);
         checkNotNull(channelValue, "Cannot retrieve the Slack channel from the context");
         checkArgument(channelValue instanceof String, "Invalid Slack channel type, expected %s, found %s", String
                 .class.getSimpleName(), channelValue.getClass().getSimpleName());
@@ -61,10 +64,11 @@ public class Reply extends PostMessage {
      * @throws IllegalArgumentException if the retrieve team identifier is not a {@link String}
      * @see SlackUtils
      */
-    public static String getTeamId(RuntimeContexts context) {
+    public static String getTeamId(StateContext context) {
         checkNotNull(context, "Cannot retrieve the team from the provided %s %s",
                 RuntimeContexts.class.getSimpleName(), context);
-        Object teamValue = context.getContextValue(SlackUtils.SLACK_CONTEXT_KEY, SlackUtils.SLACK_TEAM_CONTEXT_KEY);
+        Object teamValue =
+                context.getNlpContext().getOrDefault(SlackUtils.SLACK_CONTEXT_KEY, Collections.emptyMap()).get(SlackUtils.SLACK_TEAM_CONTEXT_KEY);
         checkNotNull(teamValue, "Cannot retrieve the Slack team from the context");
         checkArgument(teamValue instanceof String, "Invalid Slack team type, expected %s, found %s",
                 String.class.getSimpleName(), teamValue.getClass().getSimpleName());
@@ -84,25 +88,24 @@ public class Reply extends PostMessage {
      * @see SlackUtils
      */
     public static @Nullable
-    String getThreadTs(RuntimeContexts context) {
+    String getThreadTs(StateContext context) {
         checkNotNull(context, "Cannot retrieve the threadTs from the provided %s %s",
                 RuntimeContexts.class.getSimpleName(), context);
-        return (String) context.getContextValue(SlackUtils.SLACK_CONTEXT_KEY, SlackUtils.SLACK_THREAD_TS);
+        return (String) context.getNlpContext().getOrDefault(SlackUtils.SLACK_CONTEXT_KEY,
+                Collections.emptyMap()).get(SlackUtils.SLACK_THREAD_TS);
     }
 
     /**
      * Constructs a new {@link Reply} with the provided {@code runtimePlatform}, {@code session}, and {@code message}.
      *
-     * @param runtimePlatform the {@link SlackPlatform} containing this action
-     * @param session         the {@link XatkitSession} associated to this action
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context         the {@link StateContext} associated to this action
      * @param message         the message to post
-     * @throws NullPointerException     if the provided {@code runtimePlatform} or {@code session} is {@code null}
      * @throws IllegalArgumentException if the provided {@code message} is {@code null} or empty
-     * @see #getChannel(RuntimeContexts)
-     * @see PostMessage#PostMessage(SlackPlatform, XatkitSession, String, String, String)
+     * @see #getChannel(StateContext)
+     * @see PostMessage#PostMessage(SlackPlatform, StateContext, String, String, String)
      */
-    public Reply(SlackPlatform runtimePlatform, XatkitSession session, String message) {
-        super(runtimePlatform, session, message, getChannel(session.getRuntimeContexts()),
-                getTeamId(session.getRuntimeContexts()), getThreadTs(session.getRuntimeContexts()));
+    public Reply(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String message) {
+        super(platform, context, message, getChannel(context), getTeamId(context), getThreadTs(context));
     }
 }
