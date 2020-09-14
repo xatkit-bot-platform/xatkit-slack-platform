@@ -18,7 +18,7 @@ import com.github.seratch.jslack.api.model.ConversationType;
 import com.github.seratch.jslack.api.model.User;
 import com.github.seratch.jslack.api.model.block.LayoutBlock;
 import com.google.gson.JsonObject;
-import com.xatkit.core.XatkitCore;
+import com.xatkit.core.XatkitBot;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.RuntimePlatform;
 import com.xatkit.core.platform.action.RuntimeActionResult;
@@ -171,8 +171,8 @@ public class SlackPlatform extends ChatPlatform {
      * @see SlackUtils#SLACK_CLIENT_SECRET_KEY
      */
     @Override
-    public void start(XatkitCore xatkitCore, Configuration configuration) {
-        super.start(xatkitCore, configuration);
+    public void start(XatkitBot xatkitBot, Configuration configuration) {
+        super.start(xatkitBot, configuration);
         this.teamIdToSlackToken = new HashMap<>();
         slack = new Slack();
         this.channelNames = new HashMap<>();
@@ -224,23 +224,6 @@ public class SlackPlatform extends ChatPlatform {
     }
 
     /**
-     * Formats the provided {@code list} into an enumeration using the provided {@code formatterName}.
-     * <p>
-     * The selected formatter is used to compute a string representation of each list element.
-     *
-     * @param context       the current {@link StateContext}
-     * @param list          the {@link List} to format
-     * @param formatterName the name of the formatter to use
-     * @return the enumeration formatted as a string
-     */
-    public @NonNull String enumerateList(@NonNull StateContext context, @NonNull List<?> list,
-                                         @Nullable String formatterName) {
-        EnumerateList action = new EnumerateList(this, context, list, formatterName);
-        RuntimeActionResult result = action.call();
-        return (String) result.getResult();
-    }
-
-    /**
      * Returns whether the given {@code username} in the provided {@code teamId} is online.
      * <p>
      * The provided {@code username} can be a user ID, name, or real name.
@@ -267,23 +250,6 @@ public class SlackPlatform extends ChatPlatform {
      */
     public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list) {
         ItemizeList action = new ItemizeList(this, context, list);
-        RuntimeActionResult result = action.call();
-        return (String) result.getResult();
-    }
-
-    /**
-     * Formats the provided {@code list} into an item list using the provided {@code formatterName}.
-     * <p>
-     * The selected formatter is used to compute a string representaiton of each list element.
-     *
-     * @param context       the current {@link StateContext}
-     * @param list          the {@link List} to format
-     * @param formatterName the name fo the formatter to use
-     * @return the item list formatted as a string
-     */
-    public @NonNull String itemizeList(@NonNull StateContext context, @NonNull List<?> list,
-                                       @Nullable String formatterName) {
-        ItemizeList action = new ItemizeList(this, context, list, formatterName);
         RuntimeActionResult result = action.call();
         return (String) result.getResult();
     }
@@ -535,7 +501,7 @@ public class SlackPlatform extends ChatPlatform {
      * @see com.xatkit.core.server.XatkitServer
      */
     private void registerOAuthRestHandler() {
-        this.xatkitCore.getXatkitServer().registerRestEndpoint(HttpMethod.GET, "/slack/oauth/redirect",
+        this.xatkitBot.getXatkitServer().registerRestEndpoint(HttpMethod.GET, "/slack/oauth/redirect",
                 RestHandlerFactory.createJsonRestHandler((headers, param, content) -> {
                     JsonObject result = new JsonObject();
                     String code = HttpUtils.getParameterValue("code", param);
@@ -630,7 +596,7 @@ public class SlackPlatform extends ChatPlatform {
      * @return the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}
      */
     public StateContext createSessionFromChannel(String teamId, String channel) {
-        return this.xatkitCore.getOrCreateContext(teamId + "@" + this.getChannelId(teamId, channel));
+        return this.xatkitBot.getOrCreateContext(teamId + "@" + this.getChannelId(teamId, channel));
     }
 
     /**

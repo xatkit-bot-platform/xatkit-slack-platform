@@ -102,7 +102,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
      * {@code configuration}.
      * <p>
      * This constructor initializes the underlying RTM connections and creates a message listener that forwards to
-     * the {@code xatkitCore} instance not empty messages sent in channels the bot is listening to.
+     * the {@code xatkitBot} instance not empty messages sent in channels the bot is listening to.
      *
      * @param configuration   the {@link Configuration} used to retrieve the Slack bot API token
      * @throws NullPointerException if the provided {@code configuration} is {@code null}
@@ -417,7 +417,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                             try {
                                                 recognizedIntent =
                                                         IntentRecognitionHelper.getRecognizedIntent(text, session,
-                                                                SlackIntentProvider.this.xatkitCore);
+                                                                SlackIntentProvider.this.xatkitBot);
                                             } catch(IntentRecognitionProviderException e) {
                                                 throw new RuntimeException("An internal error occurred when computing" +
                                                         " the intent, see attached exception", e);

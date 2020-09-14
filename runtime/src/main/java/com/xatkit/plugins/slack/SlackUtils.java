@@ -1,6 +1,5 @@
 package com.xatkit.plugins.slack;
 
-import com.xatkit.core.XatkitCore;
 import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.plugins.chat.ChatUtils;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
@@ -21,8 +20,7 @@ public interface SlackUtils extends ChatUtils {
      * The platform can be started in deployment mode by providing the app's {@code clientId} and {@code clientSecret
      * } using the dedicated keys.
      *
-     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
-     * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
+     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform)
      */
     String SLACK_TOKEN_KEY = "xatkit.slack.token";
 
@@ -35,8 +33,7 @@ public interface SlackUtils extends ChatUtils {
      * If this key is specified the {@link Configuration} must also contain the {@link #SLACK_CLIENT_SECRET_KEY} key.
      *
      * @see #SLACK_CLIENT_SECRET_KEY
-     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
-     * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
+     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform)
      */
     String SLACK_CLIENT_ID_KEY = "xatkit.slack.client.id";
 
@@ -49,8 +46,7 @@ public interface SlackUtils extends ChatUtils {
      * If this key is specified the {@link Configuration} must also contain the {@link #SLACK_CLIENT_ID_KEY} key.
      *
      * @see #SLACK_CLIENT_ID_KEY
-     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform, Configuration)
-     * @see SlackPlatform#SlackPlatform(XatkitCore, Configuration)
+     * @see SlackIntentProvider#SlackIntentProvider(SlackPlatform)
      */
     String SLACK_CLIENT_SECRET_KEY = "xatkit.slack.client.secret";
 

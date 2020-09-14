@@ -32,12 +32,7 @@ public class EnumerateList extends FormatList<SlackPlatform> {
      *                              {@code null}
      */
     public EnumerateList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list) {
-        super(platform, context, list, null);
-    }
-
-    public EnumerateList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list,
-                         @Nullable String formatterName) {
-        super(platform, context, list, formatterName);
+        super(platform, context, list);
     }
 
     /**
@@ -54,7 +49,7 @@ public class EnumerateList extends FormatList<SlackPlatform> {
             sb.append("[")
                     .append(i)
                     .append("] ")
-                    .append(formatter.format(list.get(i)))
+                    .append(list.get(i).toString())
                     .append("\n");
         }
         return sb.toString();

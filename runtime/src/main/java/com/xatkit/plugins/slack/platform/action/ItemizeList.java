@@ -33,12 +33,7 @@ public class ItemizeList extends FormatList<SlackPlatform> {
      *                              {@code null}.
      */
     public ItemizeList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list) {
-        super(platform, context, list, null);
-    }
-
-    public ItemizeList(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull List<?> list,
-                       @Nullable String formatterName) {
-        super(platform, context, list, formatterName);
+        super(platform, context, list);
     }
 
     /**
@@ -54,7 +49,7 @@ public class ItemizeList extends FormatList<SlackPlatform> {
             return "";
         } else {
             return "- " + String.join("\n- ", list.stream()
-                    .map(o -> formatter.format(o))
+                    .map(Object::toString)
                     .collect(Collectors.toList()));
         }
     }
