@@ -103,7 +103,7 @@ public class PostLayoutBlocksMessage extends RuntimeArtifactAction<SlackPlatform
     }
 
     @Override
-    protected StateContext getClientSession() {
+    protected StateContext getClientStateContext() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }

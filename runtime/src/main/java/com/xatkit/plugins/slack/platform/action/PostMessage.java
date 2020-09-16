@@ -124,7 +124,7 @@ public class PostMessage extends RuntimeMessageAction<SlackPlatform> {
     }
 
     @Override
-    protected StateContext getClientSession() {
+    protected StateContext getClientStateContext() {
         return this.runtimePlatform.createSessionFromChannel(teamId, channel);
     }
 }
