@@ -154,6 +154,15 @@ public class SlackPlatform extends ChatPlatform {
     private Map<String, String> teamIdToSlackToken;
 
     /**
+     * Initializes and returns a new {@link SlackIntentProvider}.
+     *
+     * @return the {@link SlackIntentProvider}
+     */
+    public SlackIntentProvider getSlackIntentProvider() {
+        return new SlackIntentProvider(this);
+    }
+
+    /**
      * {@inheritDoc}
      * <p>
      * This method initializes the underlying {@link Slack} client. If the provided {@code configuration} contains a
