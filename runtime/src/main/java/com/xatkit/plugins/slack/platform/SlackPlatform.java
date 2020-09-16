@@ -28,6 +28,7 @@ import com.xatkit.core.server.RestHandlerFactory;
 import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.chat.platform.ChatPlatform;
+import com.xatkit.plugins.chat.platform.io.ChatIntentProvider;
 import com.xatkit.plugins.slack.SlackUtils;
 import com.xatkit.plugins.slack.platform.action.EnumerateList;
 import com.xatkit.plugins.slack.platform.action.IsOnline;
@@ -152,6 +153,14 @@ public class SlackPlatform extends ChatPlatform {
      * identifier is used in {@code Reply*} action to target specific workspaces.
      */
     private Map<String, String> teamIdToSlackToken;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ChatIntentProvider<? extends ChatPlatform> getChatIntentProvider() {
+        return this.getSlackIntentProvider();
+    }
 
     /**
      * Initializes and returns a new {@link SlackIntentProvider}.
