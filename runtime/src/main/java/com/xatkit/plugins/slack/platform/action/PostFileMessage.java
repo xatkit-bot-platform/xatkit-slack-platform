@@ -5,7 +5,6 @@ import com.github.seratch.jslack.api.methods.request.files.FilesUploadRequest;
 import com.github.seratch.jslack.api.methods.response.files.FilesUploadResponse;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeArtifactAction;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
@@ -71,7 +70,7 @@ public class PostFileMessage extends RuntimeArtifactAction<SlackPlatform> {
      * {@link #PostFileMessage(SlackPlatform, StateContext, String, String, String, String, String)}.
      *
      * @param platform the {@link SlackPlatform} containing this action
-     * @param context         the {@link XatkitSession} associated to this action
+     * @param context         the {@link StateContext} associated to this action
      * @param message         the message to associate to the uploaded {@link File}
      * @param file            the file to upload
      * @param channel         the Slack channel to upload the {@link File} to

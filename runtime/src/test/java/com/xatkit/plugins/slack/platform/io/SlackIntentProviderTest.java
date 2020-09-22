@@ -3,7 +3,8 @@ package com.xatkit.plugins.slack.platform.io;
 import com.xatkit.AbstractEventProviderTest;
 import com.xatkit.core.ExecutionService;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
-import com.xatkit.core.session.XatkitSession;
+import com.xatkit.execution.ExecutionFactory;
+import com.xatkit.execution.StateContext;
 import com.xatkit.intent.EventInstance;
 import com.xatkit.intent.IntentDefinition;
 import com.xatkit.intent.IntentFactory;
@@ -49,17 +50,18 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
 
     private String slackChannel;
 
-    private XatkitSession session;
+    private StateContext context;
 
     private ExecutionService mockedExecutionService;
 
     @Before
     public void setUp() {
         super.setUp();
-        session = new XatkitSession("TEST");
+        context = ExecutionFactory.eINSTANCE.createStateContext();
+        context.setContextId("TEST");
         mockedExecutionService = mock(ExecutionService.class);
         when(mockedXatkitBot.getExecutionService()).thenReturn(mockedExecutionService);
-        when(mockedXatkitBot.getOrCreateContext(any(String.class))).thenReturn(session);
+        when(mockedXatkitBot.getOrCreateContext(any(String.class))).thenReturn(context);
         slackTeamId = platform.getTeamIdToSlackTokenMap().entrySet().stream()
                 .filter((entry) -> entry.getValue().equals(SlackTestUtils.getSlackToken()))
                 .findAny().get().getKey();
@@ -98,24 +100,24 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         /*
          * Configure the mock to return a valid IntentDefinition.
          */
-        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(XatkitSession.class))).thenReturn(VALID_RECOGNIZED_INTENT);
+        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(StateContext.class))).thenReturn(VALID_RECOGNIZED_INTENT);
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getValidMessage());
         ArgumentCaptor<EventInstance> eventCaptor = ArgumentCaptor.forClass(EventInstance.class);
-        ArgumentCaptor<XatkitSession> sessionCaptor = ArgumentCaptor.forClass(XatkitSession.class);
-        verify(mockedExecutionService, times(1)).handleEventInstance(eventCaptor.capture(), sessionCaptor.capture());
-        assertThat(eventCaptor.getValue().getDefinition().getName()).isEqualTo(VALID_EVENT_DEFINITION.getName());
+        verify(mockedExecutionService, times(1)).handleEventInstance(eventCaptor.capture(), any(StateContext.class));
+        /*
+         * Check on the EventInstance and not the context here: the event hasn't been assigned to the context yet
+         * (it's done in the ExecutionService).
+         */
+        EventInstance sentEvent = eventCaptor.getValue();
+        assertThat(sentEvent.getDefinition().getName()).isEqualTo(VALID_EVENT_DEFINITION.getName());
 
         verify(mockedXatkitBot, times(1)).getOrCreateContext(eq(slackTeamId + "@" + slackChannel));
-        Map<String, Object> slackContext =
-                session.getRuntimeContexts().getContextVariables(SlackUtils.SLACK_CONTEXT_KEY);
-        assertThat(slackContext).as("Not null slack context").isNotNull();
-        assertThat(slackContext).as("Not empty slack context").isNotEmpty();
-        Object contextChannel = slackContext.get(SlackUtils.CHAT_CHANNEL_CONTEXT_KEY);
+        Object contextChannel = sentEvent.getPlatformData().get(SlackUtils.CHAT_CHANNEL_CONTEXT_KEY);
         assertThat(contextChannel).as("Not null channel context variable").isNotNull();
         assertThat(contextChannel).as("Channel context variable is a String").isInstanceOf(String.class);
         assertThat(contextChannel).as("Valid channel context variable").isEqualTo(slackChannel);
-        Object contextUsername = slackContext.get(SlackUtils.CHAT_USERNAME_CONTEXT_KEY);
+        Object contextUsername = sentEvent.getPlatformData().get(SlackUtils.CHAT_USERNAME_CONTEXT_KEY);
         assertThat(contextUsername).as("Not null username context variable").isNotNull();
         assertThat(contextUsername).as("Username context variable is a String").isInstanceOf(String.class);
         assertThat(contextUsername).as("Valid context username variable").isEqualTo("gwendal");
@@ -126,17 +128,21 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         /*
          * Configure the mock to return a valid IntentDefinition.
          */
-        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(XatkitSession.class))).thenReturn(VALID_RECOGNIZED_INTENT);
+        when(mockedIntentRecognitionProvider.getIntent(any(String.class), any(StateContext.class))).thenReturn(VALID_RECOGNIZED_INTENT);
         Configuration configuration = getValidSlackIntentProviderConfiguration();
         configuration.addProperty(SlackUtils.LISTEN_MENTIONS_ON_GROUP_CHANNELS_KEY, true);
         provider = new SlackIntentProvider(platform);
         provider.start(configuration);
         provider.getRtmClient(slackTeamId).onMessage(getValidMessageMention());
-        ArgumentCaptor<XatkitSession> sessionCaptor = ArgumentCaptor.forClass(XatkitSession.class);
-        verify(mockedExecutionService, times(1)).handleEventInstance(any(EventInstance.class), sessionCaptor.capture());
-        XatkitSession session = sessionCaptor.getValue();
-        String rawMessage = (String) session.getRuntimeContexts().getContextValue(SlackUtils.SLACK_CONTEXT_KEY,
-                SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY);
+        ArgumentCaptor<EventInstance> eventCaptor = ArgumentCaptor.forClass(EventInstance.class);
+        verify(mockedExecutionService, times(1)).handleEventInstance(eventCaptor.capture(), any(StateContext.class));
+        /*
+         * Check on the EventInstance and not the context here: the event hasn't been assigned to the context yet
+         * (it's done in the ExecutionService).
+         */
+        EventInstance sentEvent = eventCaptor.getValue();
+        String rawMessage =
+                (String) sentEvent.getPlatformData().get(SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY);
         assertThat(rawMessage).as("Message not empty").isNotEmpty();
         assertThat(rawMessage).as("Filtered mention").doesNotContain("<@" + provider.getSelfId(slackTeamId) + ">");
     }
@@ -149,7 +155,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider.start(configuration);
         provider.getRtmClient(slackTeamId).onMessage(getValidMessage());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Test
@@ -157,7 +163,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getMessageInvalidType());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Test
@@ -165,7 +171,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getMessageNullText());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Test
@@ -173,7 +179,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getMessageNullChannel());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Test
@@ -181,7 +187,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getMessageNullUser());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Test
@@ -189,7 +195,7 @@ public class SlackIntentProviderTest extends AbstractEventProviderTest<SlackInte
         provider = getValidSlackInputProvider();
         provider.getRtmClient(slackTeamId).onMessage(getMessageEmptyText());
         verify(mockedExecutionService, times(0)).handleEventInstance(any(EventInstance.class),
-                any(XatkitSession.class));
+                any(StateContext.class));
     }
 
     @Override

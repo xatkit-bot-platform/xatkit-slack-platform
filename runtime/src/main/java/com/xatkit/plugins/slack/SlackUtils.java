@@ -1,6 +1,5 @@
 package com.xatkit.plugins.slack;
 
-import com.xatkit.core.session.RuntimeContexts;
 import com.xatkit.plugins.chat.ChatUtils;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import com.xatkit.plugins.slack.platform.io.SlackIntentProvider;
@@ -89,33 +88,33 @@ public interface SlackUtils extends ChatUtils {
     String HELLO_TYPE = "hello";
 
     /**
-     * The {@link RuntimeContexts} key used to store slack-related information.
+     * The name of the platform data entry used to store slack-related information.
      */
     String SLACK_CONTEXT_KEY = "slack";
 
     /**
-     * The {@link RuntimeContexts} key used to store the slack team identifier information.
+     * The name of the platform data entry used to store the slack team identifier information.
      */
-    String SLACK_TEAM_CONTEXT_KEY = "team";
+    String SLACK_TEAM_CONTEXT_KEY = SLACK_CONTEXT_KEY + ".team";
 
     /**
-     * The {@link RuntimeContexts} key used to store the slack user email information.
+     * The name of the platform data entry used to store the slack user email information.
      */
-    String SLACK_USER_EMAIL_CONTEXT_KEY = "userEmail";
+    String SLACK_USER_EMAIL_CONTEXT_KEY = SLACK_CONTEXT_KEY + ".userEmail";
 
     /**
-     * The {@link RuntimeContexts} key used to store the slack user identifier information.
+     * The name of the platform data entry used to store the slack user identifier information.
      */
-    String SLACK_USER_ID_CONTEXT_KEY = "userId";
+    String SLACK_USER_ID_CONTEXT_KEY = SLACK_CONTEXT_KEY + ".userId";
 
     /**
-     * The {@link RuntimeContexts} key used to store the timestamp of the thread of a received message.
+     * The name of the platform data entry used to store the timestamp of the thread of a received message.
      */
-    String SLACK_THREAD_TS = "threadTs";
+    String SLACK_THREAD_TS = SLACK_CONTEXT_KEY + ".threadTs";
 
     /**
-     * The {@link RuntimeContexts} key used to store the timestamp of the received message.
+     * The name of the platform data entry used to store the timestamp of the received message.
      */
-    String SLACK_MESSAGE_TS = "messageTs";
+    String SLACK_MESSAGE_TS = SLACK_CONTEXT_KEY + ".messageTs";
 
 }

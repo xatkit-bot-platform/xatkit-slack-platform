@@ -1,18 +1,16 @@
 package com.xatkit.plugins.slack.platform.action;
 
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.chat.platform.action.FormatList;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import lombok.NonNull;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
  * Formats the provided {@link List} into an enumeration that can be embedded in Slack messages.
  * <p>
- * The provided {@link List} is stored in the {@link XatkitSession} with the {@link FormatList#LAST_FORMATTED_LIST}
+ * The provided {@link List} is stored in the session with the {@link FormatList#LAST_FORMATTED_LIST}
  * key, allowing to retrieve and manipulate it in custom actions.
  * <p>
  * This action supports any kind of {@link List}, and call the {@link Object#toString()} method on each object.

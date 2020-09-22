@@ -16,7 +16,6 @@ import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.io.IntentRecognitionHelper;
 import com.xatkit.core.platform.io.RuntimeEventProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.intent.RecognizedIntent;
 import com.xatkit.plugins.chat.ChatUtils;
@@ -410,62 +409,37 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                             StateContext context =
                                                     runtimePlatform.createSessionFromChannel(team, channel);
                                             /*
-                                             * TODO remove this cast, this method should be able to deal with
-                                             * StateContext.
-                                             */
-                                            XatkitSession session = (XatkitSession) context;
-                                            /*
                                              * Call getRecognizedIntent before setting any context variable, the
                                              * recognition triggers a decrement of all the context variables.
                                              */
                                             RecognizedIntent recognizedIntent;
                                             try {
                                                 recognizedIntent =
-                                                        IntentRecognitionHelper.getRecognizedIntent(text, session,
+                                                        IntentRecognitionHelper.getRecognizedIntent(text, context,
                                                                 SlackIntentProvider.this.xatkitBot);
                                             } catch (IntentRecognitionProviderException e) {
                                                 throw new RuntimeException("An internal error occurred when computing" +
                                                         " the intent, see attached exception", e);
                                             }
                                             /*
-                                             * The slack-related values are stored in the local context with a
-                                             * lifespan count of 1: they are reset every time a message is
-                                             * received, and may cause consistency issues when using multiple
-                                             * IntentProviders.
+                                             * Chat-related values (from ChatUtils). These are required for all the
+                                             * platforms extending ChatPlatform.
                                              */
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.SLACK_TEAM_CONTEXT_KEY, team);
-                                            session.getRuntimeContexts().setContextValue(SlackUtils
-                                                            .SLACK_CONTEXT_KEY, 1, SlackUtils.CHAT_CHANNEL_CONTEXT_KEY,
-                                                    channel);
-                                            session.getRuntimeContexts().setContextValue(SlackUtils
-                                                            .SLACK_CONTEXT_KEY, 1, SlackUtils.CHAT_USERNAME_CONTEXT_KEY,
-                                                    getUsernameFromUserId(team, user));
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY,
-                                                    getUserEmailFromUserId(team, user));
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.SLACK_THREAD_TS, threadTs);
-                                            session.getRuntimeContexts().setContextValue(SlackUtils.SLACK_CONTEXT_KEY
-                                                    , 1, SlackUtils.SLACK_MESSAGE_TS, messageTs);
-
+                                            recognizedIntent.getPlatformData().put(ChatUtils.CHAT_CHANNEL_CONTEXT_KEY
+                                                    , channel);
+                                            recognizedIntent.getPlatformData().put(ChatUtils.CHAT_USERNAME_CONTEXT_KEY, getUsernameFromUserId(team, user));
+                                            recognizedIntent.getPlatformData().put(ChatUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
                                             /*
-                                             * Copy the variables in the chat context (this context is inherited from
-                                             *  the
-                                             * Chat platform)
+                                             * Slack-specific platform values.
                                              */
-                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                    ChatUtils.CHAT_CHANNEL_CONTEXT_KEY, channel);
-                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                    ChatUtils.CHAT_USERNAME_CONTEXT_KEY,
-                                                    getUsernameFromUserId(team, user));
-                                            session.getRuntimeContexts().setContextValue(ChatUtils.CHAT_CONTEXT_KEY, 1,
-                                                    ChatUtils.CHAT_RAW_MESSAGE_CONTEXT_KEY, text);
-
+                                            recognizedIntent.getPlatformData().put(SlackUtils.SLACK_TEAM_CONTEXT_KEY,
+                                                    team);
+                                            recognizedIntent.getPlatformData().put(SlackUtils.SLACK_USER_EMAIL_CONTEXT_KEY, getUserEmailFromUserId(team, user));
+                                            recognizedIntent.getPlatformData().put(SlackUtils.SLACK_USER_ID_CONTEXT_KEY, user);
+                                            recognizedIntent.getPlatformData().put(SlackUtils.SLACK_THREAD_TS,
+                                                    threadTs);
+                                            recognizedIntent.getPlatformData().put(SlackUtils.SLACK_MESSAGE_TS,
+                                                    messageTs);
                                             if (recognizedIntent.getDefinition().getName().equals(
                                                     "Default_Fallback_Intent") && ignoreFallbackOnGroupChannels) {
                                                 /*
@@ -478,7 +452,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                 if (!SlackIntentProvider.this.runtimePlatform.isGroupChannel(team,
                                                         channel)) {
                                                     SlackIntentProvider.this.sendEventInstance(recognizedIntent,
-                                                            session);
+                                                            context);
                                                 } else {
                                                     /*
                                                      * Do nothing, fallback intents are ignored in group channels and
@@ -486,7 +460,7 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
                                                      */
                                                 }
                                             } else {
-                                                SlackIntentProvider.this.sendEventInstance(recognizedIntent, session);
+                                                SlackIntentProvider.this.sendEventInstance(recognizedIntent, context);
                                             }
                                         } else {
                                             Log.warn("Received an empty message, skipping it");

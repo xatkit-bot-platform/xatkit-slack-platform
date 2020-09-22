@@ -1,7 +1,6 @@
 package com.xatkit.plugins.slack.platform.action;
 
 import com.github.seratch.jslack.api.model.Attachment;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import lombok.NonNull;
@@ -11,7 +10,7 @@ import java.util.List;
 /**
  * Replies to a message by uploading {@code attachment}s using the input {@code teamId} workspace's channel.
  * <p>
- * This action relies on the provided {@link XatkitSession} to retrieve the Slack {@code teamId} and {@code channel}
+ * This action relies on the provided {@link StateContext} to retrieve the Slack {@code teamId} and {@code channel}
  * associated to the user input.
  * <p>
  *

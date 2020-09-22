@@ -5,7 +5,6 @@ import com.github.seratch.jslack.api.methods.request.users.UsersGetPresenceReque
 import com.github.seratch.jslack.api.methods.response.users.UsersGetPresenceResponse;
 import com.xatkit.core.XatkitException;
 import com.xatkit.core.platform.action.RuntimeAction;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.slack.platform.SlackPlatform;
 import fr.inria.atlanmod.commons.log.Log;
@@ -44,7 +43,7 @@ public class IsOnline extends RuntimeAction<SlackPlatform> {
      * and {@code teamId}.
      *
      * @param platform the {@link SlackPlatform} containing this action
-     * @param context  the {@link XatkitSession} associated to this action
+     * @param context  the {@link StateContext} associated to this action
      * @param username the name of the user to check
      * @param teamId   the unique identifier of the Slack workspace containing the user to check.
      */

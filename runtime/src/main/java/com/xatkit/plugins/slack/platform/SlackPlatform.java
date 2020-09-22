@@ -25,7 +25,6 @@ import com.xatkit.core.platform.action.RuntimeActionResult;
 import com.xatkit.core.server.HttpMethod;
 import com.xatkit.core.server.HttpUtils;
 import com.xatkit.core.server.RestHandlerFactory;
-import com.xatkit.core.session.XatkitSession;
 import com.xatkit.execution.StateContext;
 import com.xatkit.plugins.chat.platform.ChatPlatform;
 import com.xatkit.plugins.chat.platform.io.ChatIntentProvider;
@@ -611,7 +610,7 @@ public class SlackPlatform extends ChatPlatform {
      *
      * @param teamId  the identifier of the workspace to create a session for
      * @param channel the workspace's {@code channel} to create a session for
-     * @return the {@link XatkitSession} associated to the provided {@code teamId} and {@code channel}
+     * @return the {@link StateContext} associated to the provided {@code teamId} and {@code channel}
      */
     public StateContext createSessionFromChannel(String teamId, String channel) {
         return this.xatkitBot.getOrCreateContext(teamId + "@" + this.getChannelId(teamId, channel));
