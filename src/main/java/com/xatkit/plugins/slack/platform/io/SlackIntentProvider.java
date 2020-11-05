@@ -268,13 +268,11 @@ public class SlackIntentProvider extends ChatIntentProvider<SlackPlatform> {
 
     /**
      * Returns the {@link RTMClient} associated to the workspace defined by the provided {@code teamId}.
-     * <p>
-     * <b>Note:</b> this method is protected for testing purposes, and should not be called by client code.
      *
      * @param teamId the identifier of the workspace to retrieve the {@link RTMClient} from
      * @return the {@link RTMClient} associated to this class
      */
-    protected RTMClient getRtmClient(String teamId) {
+    public RTMClient getRtmClient(String teamId) {
         return rtmClients.get(teamId);
     }
 
