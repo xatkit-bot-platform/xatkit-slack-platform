@@ -41,6 +41,7 @@ import com.xatkit.plugins.slack.platform.action.ReplyAttachmentsMessage;
 import com.xatkit.plugins.slack.platform.action.ReplyFileMessage;
 import com.xatkit.plugins.slack.platform.action.ReplyLayoutBlocksMessage;
 import com.xatkit.plugins.slack.platform.io.SlackIntentProvider;
+import com.xatkit.plugins.slack.platform.io.SlackInteractiveEventProvider;
 import fr.inria.atlanmod.commons.log.Log;
 import lombok.NonNull;
 import org.apache.commons.configuration2.Configuration;
@@ -168,6 +169,15 @@ public class SlackPlatform extends ChatPlatform {
      */
     public SlackIntentProvider getSlackIntentProvider() {
         return new SlackIntentProvider(this);
+    }
+
+    /**
+     * Initializes and returns a new {@link SlackInteractiveEventProvider}.
+     *
+     * @return the {@link SlackInteractiveEventProvider}
+     */
+    public SlackInteractiveEventProvider getSlackInteractiveEventProvider() {
+        return new SlackInteractiveEventProvider(this);
     }
 
     /**
