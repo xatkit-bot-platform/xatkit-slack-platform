@@ -492,6 +492,23 @@ public class SlackPlatform extends ChatPlatform {
     }
 
     /**
+     * Posts a file with the provided {@code title}, {@code content} and {@code message} in the current channel.
+     *
+     * @param context the current {@link StateContext}
+     * @param title   the title of the file to upload
+     * @param message the message to associate to the uploaded file
+     * @param content the content of the file to upload
+     * @throws IllegalArgumentException if the provided {@code title}, {@code message}, or {@code content} is {@code
+     *                                  empty}
+     * @throws NullPointerException     if one of the provided parameter is {@code null}
+     */
+    public void replyFileMessage(@NonNull StateContext context, @NonNull String title, @NonNull String message,
+                                 @NonNull String content) {
+        ReplyFileMessage action = new ReplyFileMessage(this, context, title, message, content);
+        RuntimeActionResult result = action.call();
+    }
+
+    /**
      * Posts the provided {@code layoutBlocks} in the current channel.
      * <p>
      * The current channel is extracted from the provided {@code context}.

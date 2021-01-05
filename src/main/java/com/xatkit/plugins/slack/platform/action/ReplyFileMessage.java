@@ -35,4 +35,24 @@ public class ReplyFileMessage extends PostFileMessage {
                             @NonNull File file) {
         super(platform, context, message, file, Reply.getChannel(context), Reply.getTeamId(context));
     }
+
+    /**
+     * Contructs a new {@link ReplyFileMessage} with the provided {@code platform}, {@code context}, {@code title},
+     * {@code message}, and {@code content}.
+     *
+     * @param platform the {@link SlackPlatform} containing this action
+     * @param context  the {@link StateContext} associated to this action
+     * @param title    the title of the file to upload
+     * @param message  the message to associate to the uploaded file
+     * @param content  the content of the file to upload
+     * @throws IllegalArgumentException if the provided {@code title}, {@code message}, or {@code content} is {@code
+     *                                  empty}
+     * @throws NullPointerException     if one of the provided parameter is {@code null}
+     *
+     * @see PostFileMessage#PostFileMessage(SlackPlatform, StateContext, String, String, String, String, String)
+     */
+    public ReplyFileMessage(@NonNull SlackPlatform platform, @NonNull StateContext context, @NonNull String title,
+                            @NonNull String message, @NonNull String content) {
+        super(platform, context, title, message, content, Reply.getChannel(context), Reply.getTeamId(context));
+    }
 }
