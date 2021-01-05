@@ -1,5 +1,6 @@
 package com.xatkit.plugins.slack.platform.io;
 
+import com.github.seratch.jslack.api.model.block.element.ButtonElement;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -203,7 +204,9 @@ public class SlackInteractiveEventProvider extends WebhookEventProvider<SlackPla
          *
          * @param actionsArray the {@link JsonArray} containing the {@code actions} of the received payload
          * @return the created {@link EventInstance}
-         * @throws NullPointerException if the provided {@code actionsArray} is {@code null}
+         * @throws NullPointerException     if the provided {@code actionsArray} is {@code null}
+         * @throws IllegalArgumentException if the provided {@code actionsArray} does not contain a {@code value}
+         *                                  field for the clicked button
          * @see #ButtonClicked
          */
         private @NonNull EventInstance createButtonClickedEvent(@NonNull JsonArray actionsArray) {
@@ -218,10 +221,14 @@ public class SlackInteractiveEventProvider extends WebhookEventProvider<SlackPla
                 Log.warn("Found {0} element(s) in the 'actions' array while expecting 1, please notify the developers "
                         + "about it.");
             }
-            String buttonValue =
-                    actionsArray.get(0).getAsJsonObject().get("text").getAsJsonObject().get("text").getAsString();
+            JsonElement valueElement = actionsArray.get(0).getAsJsonObject().get("value");
+            if (isNull(valueElement)) {
+                throw new IllegalArgumentException(MessageFormat.format("The received payload for {0} does not "
+                        + "contain a \"value\" field. Make sure you specified it in the corresponding {1} of your "
+                        + "bot", ButtonClicked.getName(), ButtonElement.class.getSimpleName()));
+            }
             ContextParameterValue contextParameterValue = IntentFactory.eINSTANCE.createContextParameterValue();
-            contextParameterValue.setValue(buttonValue);
+            contextParameterValue.setValue(valueElement.getAsString());
             contextParameterValue.setContextParameter(ButtonClicked.getParameter("value"));
             eventInstance.getValues().add(contextParameterValue);
             return eventInstance;
