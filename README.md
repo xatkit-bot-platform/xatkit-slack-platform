@@ -51,6 +51,16 @@ The Slack platform supports the following configuration options
 | `xatkit.slack.ignore_fallback_on_group_channels` | Boolean | Specifies whether fallback intents should be ignored in group channels | **Optional** (default `false`) |
 | `xatkit.slack.listen_mentions_on_group_channels` | Boolean | Specifies whether the bot should only listen to mentions in group channels | **Optional** (default `false`) |
 
-## Examples
+## Installing and using the Slack platform
 
 An example of a bot that uses Slack and the GitHub platforms is available in our [repository of examples](https://github.com/xatkit-bot-platform/xatkit-examples/tree/master/GitHubBots/GithubBot).
+
+Make sure also to include this dependency to your pom
+
+```xml
+    <dependency>
+        <groupId>com.xatkit</groupId>
+        <artifactId>slack-platform</artifactId>
+        <version>3.0.1-SNAPSHOT</version>
+    </dependency>
+```
